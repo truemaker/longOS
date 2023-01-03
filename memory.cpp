@@ -70,7 +70,7 @@ void convert_mmap_to_bmp() {
 }
 
 void unlock_old_page_tables() {
-    unlock_pages((void*)0x2000,4);
+    free_pages((void*)0x2000,4);
 }
 
 void reserve_page(void* addr) {
@@ -105,7 +105,7 @@ void lock_page(void* addr) {
     free_mem -= 0x1000;
 }
 
-void unlock_page(void* addr) {
+void free_page(void* addr) {
     if (!memory_map[align_to_start((uint64_t)addr,0x1000)/0x1000]) return;
     memory_map.set(align_to_start((uint64_t)addr,0x1000)/0x1000,0);
     used_mem -= 0x1000;
@@ -118,9 +118,9 @@ void lock_pages(void* addr, uint64_t count) {
     }
 }
 
-void unlock_pages(void* addr, uint64_t count) {
+void free_pages(void* addr, uint64_t count) {
     for (uint64_t i = 0; i < count; i++) {
-        unlock_page((void*)((uint64_t)addr+i*0x1000));
+        free_page((void*)((uint64_t)addr+i*0x1000));
     }
 }
 
@@ -224,11 +224,11 @@ void ptm_t::map(void* vmem, void* pmem) {
     pd_entry_t pde;
     pde = pml4->entries[pi.pdp_i];
     pt_t* pdp;
-    if (!pde.present) {
+    if (!pde.p) {
         pdp = (pt_t*)request_page();
         clear_table(pdp);
         pde.addr = (uint64_t)pdp >> 12;
-        pde.present = true;
+        pde.p = true;
         pde.rw = true;
         pml4->entries[pi.pdp_i] = pde;
     } else {
@@ -237,11 +237,11 @@ void ptm_t::map(void* vmem, void* pmem) {
 
     pde = pdp->entries[pi.pd_i];
     pt_t* pd;
-    if (!pde.present) {
+    if (!pde.p) {
         pd = (pt_t*)request_page();
         clear_table(pd);
         pde.addr = (uint64_t)pd >> 12;
-        pde.present = true;
+        pde.p = true;
         pde.rw = true;
         pdp->entries[pi.pd_i] = pde;
     } else {
@@ -250,11 +250,11 @@ void ptm_t::map(void* vmem, void* pmem) {
 
     pde = pd->entries[pi.pt_i];
     pt_t* pt;
-    if (!pde.present) {
+    if (!pde.p) {
         pt = (pt_t*)request_page();
         clear_table(pt);
         pde.addr = (uint64_t)pt >> 12;
-        pde.present = true;
+        pde.p = true;
         pde.rw = true;
         pd->entries[pi.pt_i] = pde;
     } else {
@@ -263,7 +263,7 @@ void ptm_t::map(void* vmem, void* pmem) {
 
     pde = pt->entries[pi.p_i];
     pde.addr = (uint64_t)pmem >> 12;
-    pde.present = true;
+    pde.p = true;
     pde.rw = true;
     pt->entries[pi.p_i] = pde;
 }
@@ -273,7 +273,7 @@ void ptm_t::unmap(void* vmem) {
     pd_entry_t pde;
     pde = pml4->entries[pi.pdp_i];
     pt_t* pdp;
-    if (!pde.present) {
+    if (!pde.p) {
         return; // If the address isn't mapped we don't need to unmap it
     } else {
         pdp = (pt_t*)((uint64_t)pde.addr << 12);
@@ -281,7 +281,7 @@ void ptm_t::unmap(void* vmem) {
 
     pde = pdp->entries[pi.pd_i];
     pt_t* pd;
-    if (!pde.present) {
+    if (!pde.p) {
         return;
     } else {
         pd = (pt_t*)((uint64_t)pde.addr << 12);
@@ -289,7 +289,7 @@ void ptm_t::unmap(void* vmem) {
 
     pde = pd->entries[pi.pt_i];
     pt_t* pt;
-    if (!pde.present) {
+    if (!pde.p) {
         return;
     } else {
         pt = (pt_t*)((uint64_t)pde.addr << 12);
@@ -306,7 +306,7 @@ void* ptm_t::get_paddr(void* vaddr) {
     pd_entry_t pde;
     pde = pml4->entries[pi.pdp_i];
     pt_t* pdp;
-    if (!pde.present) {
+    if (!pde.p) {
         return (void*)0;
     } else {
         pdp = (pt_t*)((uint64_t)pde.addr << 12);
@@ -314,7 +314,7 @@ void* ptm_t::get_paddr(void* vaddr) {
 
     pde = pdp->entries[pi.pd_i];
     pt_t* pd;
-    if (!pde.present) {
+    if (!pde.p) {
         return (void*)0;
     } else {
         pd = (pt_t*)((uint64_t)pde.addr << 12);
@@ -322,7 +322,7 @@ void* ptm_t::get_paddr(void* vaddr) {
 
     pde = pd->entries[pi.pt_i];
     pt_t* pt;
-    if (!pde.present) {
+    if (!pde.p) {
         return (void*)0;
     } else {
         pt = (pt_t*)((uint64_t)pde.addr << 12);
@@ -360,7 +360,7 @@ void ptm_t::free_page(void* page) {
     mark_page_unused(aligned_page);
 }
 
-void* convert_to_address(uint64_t pdp_i,uint64_t pd_i,uint64_t pt_i,uint64_t p_i) {
+void* index2address(uint64_t pdp_i,uint64_t pd_i,uint64_t pt_i,uint64_t p_i) {
     uint64_t vaddr = pdp_i;
     vaddr <<= 9;
     vaddr = vaddr | pd_i;

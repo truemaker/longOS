@@ -11,12 +11,12 @@ typedef struct mmap_entry {
 } mmap_entry_t;
 
 typedef struct pd_entry {
-    bool present : 1;
+    bool p : 1;
     bool rw : 1;
     bool us : 1;
     bool wt : 1;
     bool cd : 1;
-    bool accessed : 1;
+    bool a : 1;
     bool ignore0 : 1;
     bool lp : 1;
     bool ignore1 : 1;
@@ -63,8 +63,8 @@ void lock_page(void*);
 void lock_pages(void*,uint64_t);
 void unreserve_page(void*);
 void unreserve_pages(void*,uint64_t);
-void unlock_page(void*);
-void unlock_pages(void*,uint64_t);
+void free_page(void*);
+void free_pages(void*,uint64_t);
 void memset(void*,uint8_t,uint64_t);
 void memcpy(void*,void*,uint64_t);
 void print_segments();
@@ -74,7 +74,7 @@ uint64_t align(uint64_t value, uint64_t alignment);
 uint64_t align_to_start(uint64_t value, uint64_t alignment);
 bool is_in_entry(mmap_entry_t* entry, void* addr);
 void unlock_old_page_tables();
-void* convert_to_address(uint64_t pdp_i,uint64_t pd_i,uint64_t pt_i,uint64_t p_i);
+void* index2address(uint64_t pdp_i,uint64_t pd_i,uint64_t pt_i,uint64_t p_i);
 
 extern bitmap_t memory_map;
 extern uint32_t* _mmap;

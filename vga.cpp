@@ -128,7 +128,7 @@ int handle_format(char* format, va_list ap) {
             print(HexToString(va_arg(ap, uint64_t)));
             return 0;
         case 't':
-            TraceStackTrace(32);
+            trace(32);
             return 0;
         case 'f':
             print(FloatToString(va_arg(ap,float)));
