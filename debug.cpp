@@ -7,7 +7,7 @@ struct stackframe {
   uint64_t rip;
 };
 
-void TraceStackTrace(unsigned int frames){
+void trace(unsigned int frames){
     struct stackframe *stk;
     stk = (struct stackframe*) __builtin_frame_address(0);
     print("Stack trace:\n\r");

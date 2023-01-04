@@ -19,38 +19,21 @@ void pic_remap() {
     outb(0xa1, a2);
 }
 
+void register_interrupt(uint64_t id, uint64_t addr) {
+    _idt[id].zero = 0;
+    _idt[id].offset_low = (uint16_t)((addr & 0xffff));
+    _idt[id].offset_mid = (uint16_t)((addr >> 16) & 0xffff);
+    _idt[id].offset_high = (uint32_t)((addr >> 32) & 0xffffffff);
+    _idt[id].ist = 0;
+    _idt[id].selector = 0x08;
+    _idt[id].types_attr = 0x8e;
+}
+
 void init_idt() {
-    _idt[1].zero = 0;
-    _idt[1].offset_low = (uint16_t)(((uint64_t)&isr1 & 0xffff));
-    _idt[1].offset_mid = (uint16_t)(((uint64_t)&isr1 >> 16) & 0xffff);
-    _idt[1].offset_high = (uint32_t)(((uint64_t)&isr1 >> 32) & 0xffffffff);
-    _idt[1].ist = 0;
-    _idt[1].selector = 0x08;
-    _idt[1].types_attr = 0x8e;
-
-    _idt[0xe].zero = 0;
-    _idt[0xe].offset_low = (uint16_t)(((uint64_t)&pagef_handler & 0xffff));
-    _idt[0xe].offset_mid = (uint16_t)(((uint64_t)&pagef_handler >> 16) & 0xffff);
-    _idt[0xe].offset_high = (uint32_t)(((uint64_t)&pagef_handler >> 32) & 0xffffffff);
-    _idt[0xe].ist = 0;
-    _idt[0xe].selector = 0x08;
-    _idt[0xe].types_attr = 0x8e;
-
-    _idt[0x8].zero = 0;
-    _idt[0x8].offset_low = (uint16_t)(((uint64_t)&doublef_handler & 0xffff));
-    _idt[0x8].offset_mid = (uint16_t)(((uint64_t)&doublef_handler >> 16) & 0xffff);
-    _idt[0x8].offset_high = (uint32_t)(((uint64_t)&doublef_handler >> 32) & 0xffffffff);
-    _idt[0x8].ist = 0;
-    _idt[0x8].selector = 0x08;
-    _idt[0x8].types_attr = 0x8e;
-
-    _idt[0xd].zero = 0;
-    _idt[0xd].offset_low = (uint16_t)(((uint64_t)&gpf_handler & 0xffff));
-    _idt[0xd].offset_mid = (uint16_t)(((uint64_t)&gpf_handler >> 16) & 0xffff);
-    _idt[0xd].offset_high = (uint32_t)(((uint64_t)&gpf_handler >> 32) & 0xffffffff);
-    _idt[0xd].ist = 0;
-    _idt[0xd].selector = 0x08;
-    _idt[0xd].types_attr = 0x8e;
+    register_interrupt(1, (uint64_t)&isr1);
+    register_interrupt(0xe, (uint64_t)&pagef_handler);
+    register_interrupt(0x8, (uint64_t)&doublef_handler);
+    register_interrupt(0xd, (uint64_t)&gpf_handler);
 
     pic_remap();
     outb(0x21, 0xfd);

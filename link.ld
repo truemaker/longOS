@@ -14,6 +14,7 @@ INPUT (
     bitmap.o
     task.o
     serial.o
+    disk.o
 )
 
 OUTPUT (

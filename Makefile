@@ -17,6 +17,7 @@ all:
 	$(GPP) $(ARGS64) "bitmap.cpp" -o "bitmap.o"
 	$(GPP) $(ARGS64) "task.cpp" -o "task.o"
 	$(GPP) $(ARGS64) "serial.cpp" -o "serial.o"
+	$(GPP) $(ARGS64) "disk.cpp" -o "disk.o"
 	$(LD) -T "link.ld" -Map memory.map
 	cat boot.bin kernel.bin zero.bin > OS.bin
 	qemu-system-$(TARGET) -m 256M OS.bin -serial stdio

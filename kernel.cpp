@@ -5,6 +5,7 @@
 #include <bitmap.h>
 #include <asm.h>
 #include <serial.h>
+#include <disk.h>
 
 ptm_t init_paging() {
     pt_t* pml4 = (pt_t*)request_page();
@@ -44,8 +45,25 @@ extern "C" void main() {
     ptm_t kpm = init_paging();
     
     print_segments();
+    clear();
+    print("Init disk...\n\r");
+    device_t dev0 = device_t(0x1f0,0x3F6,0xA0,"Disk 1");
+    init_disk(&dev0);
+    print_device(&dev0);
 
-    printf("VRAM: %h\n\r%t", kpm.get_paddr((void*)0xb8000));
+    device_t dev1 = device_t(0x1f0,0x3F6,0xB0,"Disk 2");
+    init_disk(&dev1);
+    print_device(&dev1);
+
+    device_t dev2 = device_t(0x170,0x376,0xA0,"Disk 3");
+    init_disk(&dev2);
+    print_device(&dev2);
+
+    device_t dev3 = device_t(0x170,0x376,0xB0,"Disk 4");
+    init_disk(&dev3);
+    print_device(&dev3);
+
+    //printf("VRAM: %h\n\r%t", kpm.get_paddr((void*)0xb8000));
 
     for (;;);
     return;
