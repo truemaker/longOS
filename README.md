@@ -16,4 +16,4 @@ The future is difficult
 - Usermode (sometime when i decide to not do something else instead)
 - A PTM that doesn't take 5 seconds to allocate 10000 pages
 ## License
-Do whatever you want as long as you don't hurt anyone, that includes animals, peoples and robots, with it.
+Do whatever you want as long as you don't hurt anyone, that includes animals, people and robots, with it.

@@ -172,3 +172,7 @@ void clear(uint8_t color) {
     }
     set_cursor_pos(0);
 }
+
+void print_hex(uint16_t word) {
+    print(HexToString(word));
+}

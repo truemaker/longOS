@@ -52,7 +52,7 @@ print:
 read_disk:
     mov bx, 0x8000
     mov ah, 0x02
-    mov al, 56
+    mov al, 64
     mov ch, 0x00
     mov dh, 0x00
     mov cl, 0x02

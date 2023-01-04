@@ -7,6 +7,8 @@
 #include <serial.h>
 #include <disk.h>
 
+uint16_t buffer[256];
+
 ptm_t init_paging() {
     pt_t* pml4 = (pt_t*)request_page();
     memset(pml4, 0, 0x1000);
@@ -62,6 +64,14 @@ extern "C" void main() {
     device_t dev3 = device_t(0x170,0x376,0xB0,"Disk 4");
     init_disk(&dev3);
     print_device(&dev3);
+
+    read_disk(&dev0,(uint8_t*)buffer,0,1);
+
+    for (int i = 1; i <= 256; i++) {
+        if ((((i - 1) % 16) != 0) && (i != 0)) print(" ");
+        print_hex(buffer[i-1]);
+        if (((i % 16) == 0) && (i != 0)) print("\n\r");
+    }
 
     //printf("VRAM: %h\n\r%t", kpm.get_paddr((void*)0xb8000));
 

@@ -34,3 +34,4 @@ typedef struct device {
 void init_disk(device_t* dev);
 void reset_device(device_t* dev);
 void print_device(device_t* dev);
+void read_disk(device_t* dev, uint8_t* buffer, uint32_t lba, uint8_t sectors);
