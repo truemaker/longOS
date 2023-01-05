@@ -25,4 +25,4 @@ all:
 	make clean
 
 clean:
-	rm -rf *.o *.bin
+	rm -rf *.o *.bin *.img

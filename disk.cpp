@@ -68,6 +68,13 @@ void print_device(device_t* dev) {
     print("\n\n\r");
 }
 
+void disk_delay(device_t* dev) {
+    uint64_t k = 0;
+    for (uint64_t i = 0; i < 16; i++) {
+        k = inb(dev->dev_ctl);
+    }
+}
+
 void wait_disk_ready(device_t* dev) {
     uint8_t stat = inb(dev->dev_ctl);
     while (stat & (1 << 7)) stat = inb(dev->dev_ctl);
@@ -90,4 +97,52 @@ void read_disk(device_t* dev, uint8_t* buffer, uint32_t lba, uint8_t sectors) {
             buffer16++;
         }
     }
+}
+
+void write_disk(device_t* dev, uint8_t* buffer, uint32_t lba, uint8_t sectors) {
+    select(dev, 0xE0 | ((lba >> 24)&0x0F));
+    outb(dev->base + DEV_OFF_FEAT, 0);
+    outb(dev->base + DEV_OFF_SC, sectors);
+    outb(dev->base + DEV_OFF_SN, lba);
+    outb(dev->base + DEV_OFF_CL, lba >> 8);
+    outb(dev->base + DEV_OFF_CH, lba >> 16);
+    outb(dev->base + DEV_OFF_CMD, 0x30);
+    wait_disk_ready(dev);
+    uint16_t* buffer16 = (uint16_t*)buffer;
+    for (uint16_t i = 0; i < sectors; i++) {
+        wait_disk_ready(dev);
+        for (uint16_t j = 0; j < 256; j++) {
+            outw(dev->base + DEV_OFF_DATA,*buffer16);
+            disk_delay(dev);
+            buffer16++;
+        }
+    }
+}
+
+void print_partition(partition_t* partition) {
+    if (partition->type == 0) {
+        print("    Free");
+        return;
+    }
+    print("    Attributes: ");
+    print_hex(partition->attributes);
+    print("\n\r    LBA: ");
+    print_hex(partition->lba);
+    print("\n\r    Type: ");
+    print_hex(partition->type);
+    printf("\n\r    Sectors: %x", partition->sectors);
+}
+
+void print_mbr(mbr_t* mbr) {
+    print("UID: ");
+    print_hex(mbr->uid);
+    print("\n\rPartition 0: \n\r");
+    print_partition(&mbr->partition0);
+    print("\n\rPartition 1: \n\r");
+    print_partition(&mbr->partition1);
+    print("\n\rPartition 2: \n\r");
+    print_partition(&mbr->partition2);
+    print("\n\rPartition 3: \n\r");
+    print_partition(&mbr->partition3);
+    printf("\n\rValid: %s", (mbr->signature == 0xAA55)?"Yes":"No");
 }

@@ -173,6 +173,18 @@ void clear(uint8_t color) {
     set_cursor_pos(0);
 }
 
+void print_hex(uint8_t byte) {
+    print(HexToString(byte));
+}
+
 void print_hex(uint16_t word) {
     print(HexToString(word));
+}
+
+void print_hex(uint32_t dword) {
+    print(HexToString(dword));
+}
+
+void print_hex(uint64_t quad) {
+    print(HexToString(quad));
 }

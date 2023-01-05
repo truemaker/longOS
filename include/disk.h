@@ -31,7 +31,32 @@ typedef struct device {
     device(uint16_t b, uint16_t ctl, uint8_t ms, char* name);
 } device_t;
 
+typedef struct partition {
+    uint8_t attributes;
+    uint8_t start_chs_high;
+    uint8_t start_chs_mid;
+    uint8_t start_chs_low;
+    uint8_t type;
+    uint8_t end_chs_high;
+    uint8_t end_chs_mid;
+    uint8_t end_chs_low;
+    uint32_t lba;
+    uint32_t sectors;
+} partition_t __attribute__((packed));
+
+typedef struct mbr {
+    uint32_t uid;
+    uint16_t zero;
+    partition_t partition0;
+    partition_t partition1;
+    partition_t partition2;
+    partition_t partition3;
+    uint16_t signature;
+} mbr_t __attribute__((packed));
+
 void init_disk(device_t* dev);
 void reset_device(device_t* dev);
 void print_device(device_t* dev);
 void read_disk(device_t* dev, uint8_t* buffer, uint32_t lba, uint8_t sectors);
+void write_disk(device_t* dev, uint8_t* buffer, uint32_t lba, uint8_t sectors);
+void print_mbr(mbr_t* mbr);

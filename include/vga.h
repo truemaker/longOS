@@ -49,4 +49,7 @@ void printc(char c);
 void printf(const char *str, ...);
 uint8_t attribute(uint8_t fc, uint8_t bc);
 void clear(uint8_t color = BG_BLUE | FG_WHITE);
+void print_hex(uint8_t byte);
 void print_hex(uint16_t word);
+void print_hex(uint32_t dword);
+void print_hex(uint64_t quad);
