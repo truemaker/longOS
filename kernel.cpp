@@ -74,7 +74,7 @@ extern "C" void main() {
         if (((i % 16) == 0) && (i != 0)) print("\n\r");
     }
     mbr_t* mbr = (mbr_t*)(&buffer[0xDB]);
-    if (mbr->signature == 0xAA55) print_mbr(mbr);
+    print_mbr(mbr);
     //printf("VRAM: %h\n\r%t", kpm.get_paddr((void*)0xb8000));
 
     for (;;);

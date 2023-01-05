@@ -6,6 +6,7 @@ LD=/usr/local/$(TARGET)elfgcc/bin/$(TARGET)-elf-ld
 all:
 	dd if=/dev/zero of=zero.bin bs=512 count=26
 	nasm -f bin boot.asm -o boot.bin
+	nasm -f bin mbr.asm -o mbr.bin
 	nasm -f elf64 extended_boot.asm -o extboot.o
 	$(GPP) $(ARGS64) "kernel.cpp" -o "kernel.o"
 	$(GPP) $(ARGS64) "vga.cpp" -o "vga.o"
@@ -19,7 +20,9 @@ all:
 	$(GPP) $(ARGS64) "serial.cpp" -o "serial.o"
 	$(GPP) $(ARGS64) "disk.cpp" -o "disk.o"
 	$(LD) -T "link.ld" -Map memory.map
-	cat boot.bin kernel.bin zero.bin > OS.bin
+	cat mbr.bin boot.bin kernel.bin zero.bin > OS.bin
+	dd if=/dev/zero of=image.img bs=512 count=2880
+	dd if=OS.bin of=image.img conv=notrunc
 	qemu-system-$(TARGET) -m 256M OS.bin -serial stdio
 #kvm-spice -m 256M OS.bin
 	make clean

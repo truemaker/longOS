@@ -51,11 +51,11 @@ print:
 
 read_disk:
     mov bx, 0x8000
-    mov ah, 0x02
+    mov ah, 0x02 
     mov al, 64
     mov ch, 0x00
     mov dh, 0x00
-    mov cl, 0x02
+    mov cl, 0x03; Assuming we are in partition one (you should not do that)
     mov dl, [BOOT_DISK]
     int 0x13
     jc disk_error
