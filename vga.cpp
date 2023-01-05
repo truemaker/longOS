@@ -131,7 +131,7 @@ int handle_format(char* format, va_list ap) {
             trace(32);
             return 0;
         case 'f':
-            print(FloatToString(va_arg(ap,float)));
+            print(FloatToString(va_arg(ap,double)));
             return 0;
         case 'x':
             print(IntegerToString(va_arg(ap,uint64_t)));

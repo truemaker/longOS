@@ -1,5 +1,5 @@
 TARGET=x86_64
-ARGS=-Iinclude -ffreestanding -nostdlib -mno-red-zone
+ARGS=-Iinclude -ffreestanding -nostdlib -mno-red-zone -Wno-write-strings
 ARGS64=$(ARGS) -m64 -c
 GPP=/usr/local/$(TARGET)elfgcc/bin/$(TARGET)-elf-g++
 LD=/usr/local/$(TARGET)elfgcc/bin/$(TARGET)-elf-ld

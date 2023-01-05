@@ -42,7 +42,7 @@ typedef struct partition {
     uint8_t end_chs_low;
     uint32_t lba;
     uint32_t sectors;
-} partition_t __attribute__((packed));
+} partition_t;
 
 typedef struct mbr {
     uint32_t uid;
@@ -52,7 +52,7 @@ typedef struct mbr {
     partition_t partition2;
     partition_t partition3;
     uint16_t signature;
-} mbr_t __attribute__((packed));
+} mbr_t;
 
 void init_disk(device_t* dev);
 void reset_device(device_t* dev);
