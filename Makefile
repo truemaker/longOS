@@ -4,6 +4,9 @@ ARGS64=$(ARGS) -m64 -c
 GPP=/usr/local/$(TARGET)elfgcc/bin/$(TARGET)-elf-g++
 LD=/usr/local/$(TARGET)elfgcc/bin/$(TARGET)-elf-ld
 all:
+	make run
+	make clean
+build:
 	dd if=/dev/zero of=zero.bin bs=512 count=26
 	nasm -f bin boot.asm -o boot.bin
 	nasm -f bin mbr.asm -o mbr.bin
@@ -23,9 +26,9 @@ all:
 	cat mbr.bin boot.bin kernel.bin zero.bin > OS.bin
 	dd if=/dev/zero of=image.img bs=512 count=2880
 	dd if=OS.bin of=image.img conv=notrunc
+run: build
 	qemu-system-$(TARGET) -m 256M OS.bin -serial stdio
 #kvm-spice -m 256M OS.bin
-	make clean
 
 clean:
 	rm -rf *.o *.bin *.img
