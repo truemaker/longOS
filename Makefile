@@ -1,5 +1,5 @@
 TARGET=x86_64
-ARGS=-Iinclude -ffreestanding -nostdlib -mno-red-zone -Wno-write-strings
+ARGS=-Iinclude -ffreestanding -nostdlib -mno-red-zone -Wno-write-strings -fpermissive
 ARGS64=$(ARGS) -m64 -c
 GPP=/usr/local/$(TARGET)elfgcc/bin/$(TARGET)-elf-g++
 LD=/usr/local/$(TARGET)elfgcc/bin/$(TARGET)-elf-ld
@@ -22,6 +22,7 @@ build:
 	$(GPP) $(ARGS64) "task.cpp" -o "task.o"
 	$(GPP) $(ARGS64) "serial.cpp" -o "serial.o"
 	$(GPP) $(ARGS64) "disk.cpp" -o "disk.o"
+	$(GPP) $(ARGS64) "cfs.cpp" -o "cfs.o"
 	$(LD) -T "link.ld" -Map memory.map
 	cat mbr.bin boot.bin kernel.bin zero.bin > OS.bin
 	dd if=/dev/zero of=image.img bs=512 count=2880

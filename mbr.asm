@@ -7,7 +7,7 @@ xor ax, ax                  ; 0 AX
 mov ds, ax                  ; Set Data Segment to 0
 mov es, ax                  ; Set Extra Segment to 0
 mov ss, ax                  ; Set Stack Segment to 0
-mov sp, 0x6000              ; Set Stack Pointer to 0x6000
+mov sp, 0x7C00              ; Set Stack Pointer to 0x7c00
 .cpy:
     mov cx, 0x0100            ; 256 WORDs in MBR
     mov si, 0x7C00            ; Current MBR Address
@@ -82,9 +82,8 @@ PT1:
     times 3 db 0
     db 0x69
     times 3 db 0
-    dd 0x1
-    dd 2879
-
+    dd 0x01
+    dd 2872
 PT2 times 16 db 0             ; Second Partition Entry
 PT3 times 16 db 0             ; Third Partition Entry
 PT4 times 16 db 0             ; Fourth Partition Entry

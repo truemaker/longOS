@@ -15,6 +15,7 @@ INPUT (
     task.o
     serial.o
     disk.o
+    cfs.o
 )
 
 OUTPUT (

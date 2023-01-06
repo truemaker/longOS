@@ -360,6 +360,33 @@ void ptm_t::free_page(void* page) {
     mark_page_unused(aligned_page);
 }
 
+void* ptm_t::allocate_pages(uint64_t count) {
+    uint64_t move_by = 0;
+    for (uint64_t i = 0; i < vmmap.size-count; i+=move_by) {
+        bool usable = true;
+        for (uint64_t j = 0; j < count; j++) {
+            if (vmmap[i+j]) {
+                move_by = j+1;
+                usable = false;
+            }
+        }
+        if (usable) {
+            for (uint64_t j = 0; j < count; j++) {
+                mark_page_used((void*)((i+j)*0x1000));
+                map((void*)((i+j)*0x1000),request_page());
+            }
+            return (void*)(i*0x1000);
+        }
+    }
+    return nullptr; // Hope this never happens
+}
+
+void ptm_t::free_pages(void* page, uint64_t count) {
+    for (uint64_t i = 0; i < count; i++) {
+        free_page((void*)((uint64_t)page + 0x1000 * i));
+    }
+}
+
 void* index2address(uint64_t pdp_i,uint64_t pd_i,uint64_t pt_i,uint64_t p_i) {
     uint64_t vaddr = pdp_i;
     vaddr <<= 9;

@@ -7,6 +7,7 @@
 #include <serial.h>
 #include <disk.h>
 #include <io.h>
+#include <cfs.h>
 
 uint16_t buffer[256];
 
@@ -15,15 +16,16 @@ ptm_t init_paging() {
     memset(pml4, 0, 0x1000);
     ptm_t pm = ptm_t(pml4,get_memory_size()/0x1000);
     print("Created PTM and PML4\n\r");
-    for (uint64_t i = 0; i < 0x200; i++) {
+    for (uint64_t i = 0; i < 0x100; i++) {
         pm.map((void*)(i*0x1000),(void*)(i*0x1000));
         pm.mark_page_used((void*)(i*0x1000));
+        lock_page((void*)(i*0x1000));
     }
     print("Identity mapped 512 pages at the start of memory\n\rLoading PML4...");
     asm("mov %0, %%cr3"::"r"(pml4));
-    unlock_old_page_tables();
+    //unlock_old_page_tables();
     print("done\n\r");
-    for (uint64_t i = 0x200; i < (get_memory_size()/0x1000); i++) {
+    for (uint64_t i = 0x100; i < (get_memory_size()/0x1000); i++) {
         pm.map((void*)(i*0x1000),(void*)(i*0x1000));
     }
     print("Identity mapped everything\n\r");
@@ -67,16 +69,10 @@ extern "C" void main() {
     print_device(&dev3);
 
     read_disk(&dev0,(uint8_t*)buffer,0,1);
-
-    for (int i = 1; i <= 256; i++) {
-        if ((((i - 1) % 16) != 0) && (i != 0)) print(" ");
-        print_hex(buffer[i-1]);
-        if (((i % 16) == 0) && (i != 0)) print("\n\r");
-    }
     mbr_t* mbr = (mbr_t*)(&buffer[0xDB]);
-    print_mbr(mbr);
-    //printf("VRAM: %h\n\r%t", kpm.get_paddr((void*)0xb8000));
-
+    //print_mbr(mbr);
+    cfs_t cfs = cfs_t(mbr->partition0,&dev0, &kpm);
+    cfs.list_files();
     for (;;);
     return;
 }
