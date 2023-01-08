@@ -93,7 +93,8 @@ void read_disk(device_t* dev, uint8_t* buffer, uint32_t lba, uint8_t sectors) {
     for (uint16_t i = 0; i < sectors; i++) {
         wait_disk_ready(dev);
         for (uint16_t j = 0; j < 256; j++) {
-            *buffer16 = inw(dev->base + DEV_OFF_DATA);
+            uint16_t word = inw(dev->base + DEV_OFF_DATA);
+            *buffer16 = word;
             buffer16++;
         }
     }

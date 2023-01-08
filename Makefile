@@ -24,11 +24,11 @@ build:
 	$(GPP) $(ARGS64) "disk.cpp" -o "disk.o"
 	$(GPP) $(ARGS64) "cfs.cpp" -o "cfs.o"
 	$(LD) -T "link.ld" -Map memory.map
-	cat mbr.bin boot.bin kernel.bin zero.bin > OS.bin
+	cat mbr.bin boot.bin kernel.bin > OS.bin
 	dd if=/dev/zero of=image.img bs=512 count=2880
 	dd if=OS.bin of=image.img conv=notrunc
 run: build
-	qemu-system-$(TARGET) -m 256M OS.bin -serial stdio
+	qemu-system-$(TARGET) -m 256M image.img -serial stdio
 #kvm-spice -m 256M OS.bin
 
 clean:

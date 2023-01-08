@@ -30,7 +30,7 @@ typedef struct file_entry {
     uint16_t flags;
     uint32_t lba;
     uint16_t size;
-} file_entry_t;
+} file_entry_t __attribute__((packed));
 
 typedef struct cfs {
     header_t header;
@@ -39,4 +39,6 @@ typedef struct cfs {
     device_t* dev;
     cfs(partition_t,device_t*,ptm_t*);
     void list_files();
+    void cfs::print_file(file_entry_t* file);
+    void cfs::recalculate_header();
 } cfs_t;

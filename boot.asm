@@ -7,7 +7,7 @@ fsh_vid: db "longOS  "
 fsh_rds: db 1
 fsh_spb: dw 8
 fsh_total_blocks: dw 359
-fsh_free_blocks: dw 351
+fsh_free_blocks: dw 350
 fsh_magic: db 0x42, 0x69, 0x11, 0x11
 fsh_reserved_sectors: db 1
 
@@ -105,8 +105,8 @@ buffer: db "BlubBlah!",0
 times 510-($-$$) db 0
 dw 0xaa55
 root_dir:
-kernel_name: db "OS   BIN"
-dw 0x89
-kernel_pos: dd 1
-kernel_size: dw 8
-times (512*8)-($-root_dir) db 0
+kernel_name: db "OS   BIN" ; 8 bytes
+dw 0x89 ; 2 bytes
+kernel_pos: dd 1 ; 4 bytes
+kernel_size: dw 8 ; 2 bytes
+times 0x1200-($-$$) db 0
