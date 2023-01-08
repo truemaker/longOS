@@ -28,8 +28,8 @@ typedef struct header {
 typedef struct file_entry {
     char name[8];
     uint16_t flags;
-    uint32_t lba;
-    uint16_t size;
+    uint8_t pos;
+    uint8_t size;
 } file_entry_t __attribute__((packed));
 
 typedef struct cfs {

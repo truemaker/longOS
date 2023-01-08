@@ -8,7 +8,7 @@ cfs::cfs(partition_t partition,device_t* device,ptm_t* ptm) {
     read_disk(dev,fsbuffer,partition.lba,1);
     memcpy(&header,fsbuffer,sizeof(header_t));
     start_lba = partition.lba + header.reserved_sectors;
-    uint8_t pages_for_root_dir = 1;//((header.root_dir_size * header.sectors_per_block * 512) & ~0xfff) >> 12;
+    uint8_t pages_for_root_dir = ((header.root_dir_size * header.sectors_per_block * 512) & ~0xfff) >> 12;
     files = (file_entry*)ptm->allocate_pages(pages_for_root_dir);
     read_disk(dev,(uint8_t*)files,start_lba,header.root_dir_size*header.sectors_per_block);
     read_disk(dev,fsbuffer,partition.lba,1);
@@ -68,7 +68,7 @@ void cfs::print_file(file_entry* file) {
         display /= 1024;
         unit++;
     }
-    printf("%x %s %h", display, units[unit], file->lba);
+    printf("%x %s", display, units[unit]);
     print("\n\r");
 }
 
@@ -76,12 +76,12 @@ void cfs::list_files() {
     fill_volume_name(header.vid,fsbuffer);
     printf("Volume %s contains:\n\r",fsbuffer);
     file_entry_t* file_list = files;
-    for (uint64_t i = 0; (i < ((header.root_dir_size * header.sectors_per_block * 512) / 16)); i++) {
+    for (uint64_t i = 0; (i < ((header.root_dir_size * header.sectors_per_block * 512) / 12)); i++) {
         if (file_list->flags&CFS_FILE_FLAG_PRESENT!=0) {
             print_file(file_list);
             //printf("%h\n\r",file_list->flags);
         }
-        file_list = (file_entry_t*)((uint64_t)file_list + 16);
+        file_list = (file_entry_t*)((uint64_t)file_list + 12);
     }
     const char* units[] = {"Bytes", "KB", "MB", "GB"};
     uint8_t unitf = 0;
@@ -102,18 +102,12 @@ void cfs::list_files() {
 void cfs::recalculate_header() {
     uint16_t blocks = header.total_blocks;
     uint64_t used = 0;
-    printf("%x ",blocks);
     file_entry_t* file_list = files;
-    for (uint64_t i = 0; (i < ((header.root_dir_size * header.sectors_per_block * 512) / 16)); i++) {
+    for (uint64_t i = 0; (i < ((header.root_dir_size * header.sectors_per_block * 512) / 12)); i++) {
         if (file_list->flags&CFS_FILE_FLAG_PRESENT!=0) {
-            printf("%x ",used);
             used += file_list->size;
-            printf("%x ",used);
-            printf("%x ",file_list->size);
         }
-        file_list = (file_entry_t*)((uint64_t)file_list + 16);
+        file_list = (file_entry_t*)((uint64_t)file_list + 12);
     }
-    printf("%x ",blocks);
     header.free_blocks = blocks - used;
-    printf("%x",header.free_blocks);
 }
