@@ -80,3 +80,4 @@ extern bitmap_t memory_map;
 extern uint32_t* _mmap;
 extern uint8_t _start_all;
 extern uint8_t _end_all;
+extern ptm_t *g_PTM;

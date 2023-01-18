@@ -16,6 +16,7 @@ INPUT (
     serial.o
     disk.o
     cfs.o
+    heap.o
 )
 
 OUTPUT (

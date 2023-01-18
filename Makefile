@@ -23,6 +23,7 @@ build:
 	$(GPP) $(ARGS64) "serial.cpp" -o "serial.o"
 	$(GPP) $(ARGS64) "disk.cpp" -o "disk.o"
 	$(GPP) $(ARGS64) "cfs.cpp" -o "cfs.o"
+	$(GPP) $(ARGS64) "heap.cpp" -o "heap.o"
 	$(LD) -T "link.ld" -Map memory.map
 	cat mbr.bin boot.bin kernel.bin > OS.bin
 	dd if=/dev/zero of=image.img bs=512 count=2880

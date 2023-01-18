@@ -8,8 +8,11 @@
 #include <disk.h>
 #include <io.h>
 #include <cfs.h>
+#include <heap.h>
 
 uint16_t buffer[256];
+
+ptm_t* g_PTM = NULL;
 
 ptm_t init_paging() {
     pt_t* pml4 = (pt_t*)request_page();
@@ -47,7 +50,7 @@ extern "C" void main() {
     print_memory();
     convert_mmap_to_bmp();
     
-    ptm_t kpm = init_paging();
+    g_PTM = &init_paging();
     
     print_segments();
     clear();
@@ -71,8 +74,22 @@ extern "C" void main() {
     read_disk(&dev0,(uint8_t*)buffer,0,1);
     mbr_t* mbr = (mbr_t*)(&buffer[0xDB]);
     //print_mbr(mbr);
-    cfs_t cfs = cfs_t(mbr->partition0,&dev0, &kpm);
-    cfs.list_files();
+    //cfs_t cfs = cfs_t(mbr->partition0,&dev0, g_PTM);
+    //cfs.list_files();
+    clear();
+    init_heap((void*)0x0000100000000000,0x10);
+    void* a = malloc(0x100);
+    void* b = malloc(0x100);
+    void* c = malloc(0x100);
+    void* d = malloc(0x100);
+    printf("A: %h\n\rB: %h\n\rC: %h\n\rD: %h\n\r",a,b,c,d);
+    free(b);
+    void* e = malloc(0x100);
+    printf("E: %h\n\r",e);
+    free(a);
+    free(c);
+    free(d);
+    free(e);
     for (;;);
     return;
 }

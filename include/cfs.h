@@ -28,7 +28,9 @@ typedef struct header {
 typedef struct file_entry {
     char name[8];
     uint16_t flags;
-    uint8_t pos;
+    uint8_t pos_lo;
+    uint8_t pos_mid;
+    uint8_t pos_hi;
     uint8_t size;
 } file_entry_t __attribute__((packed));
 
