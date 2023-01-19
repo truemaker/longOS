@@ -61,8 +61,7 @@ print:
 
 read_disk:
     mov ax, 8
-    mov cl, [kernel_pos+2]
-    shl ecx, 8
+    mov ch, [kernel_pos+2]
     mov cl, [kernel_pos+1]
     shl ecx, 8
     mov cl, [kernel_pos]
@@ -74,6 +73,7 @@ read_disk:
     
     mov ax, 8
     mov bl, [kernel_size]
+    mov bh, [kernel_size+1]
     mul bx
 
     mov bx, 0x8000
@@ -113,5 +113,5 @@ root_dir:
 kernel_name: db "OS   BIN" ; 8 bytes
 db 0x89, 0 ; 2 bytes
 kernel_pos: db 1,0,0 ; 3 byte
-kernel_size: db 8 ; 1 byte
+kernel_size: db 13,0,0 ; 3 byte
 times 0x1200-($-$$) db 0

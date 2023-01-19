@@ -225,6 +225,7 @@ void ptm_t::map(void* vmem, void* pmem) {
     pde = pml4->entries[pi.pdp_i];
     pt_t* pdp;
     if (!pde.p) {
+        debugf("New PDP\n\r");
         pdp = (pt_t*)request_page();
         clear_table(pdp);
         pde.addr = (uint64_t)pdp >> 12;
@@ -238,6 +239,7 @@ void ptm_t::map(void* vmem, void* pmem) {
     pde = pdp->entries[pi.pd_i];
     pt_t* pd;
     if (!pde.p) {
+        debugf("New PD\n\r");
         pd = (pt_t*)request_page();
         clear_table(pd);
         pde.addr = (uint64_t)pd >> 12;
@@ -251,6 +253,7 @@ void ptm_t::map(void* vmem, void* pmem) {
     pde = pd->entries[pi.pt_i];
     pt_t* pt;
     if (!pde.p) {
+        debugf("New PT\n\r");
         pt = (pt_t*)request_page();
         clear_table(pt);
         pde.addr = (uint64_t)pt >> 12;
@@ -298,6 +301,7 @@ void ptm_t::unmap(void* vmem) {
     pde = pt->entries[pi.p_i];
     memset(&pde,0,sizeof(pde));
     reload_cr3();
+    debugf("Unmap %h\n\r",vmem);
 }
 
 void* ptm_t::get_paddr(void* vaddr) {
@@ -349,6 +353,7 @@ void* ptm_t::allocate_page() {
         if (vmmap[i]) continue;
         mark_page_used((void*)(i*0x1000));
         map((void*)(i*0x1000),request_page());
+        debugf("PALLOC %h\n\r",i*0x1000);
         return (void*)(i*0x1000);
     }
     return (void*)0;

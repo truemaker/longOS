@@ -47,6 +47,7 @@ uint16_t coord_from_pos(uint16_t x, uint16_t y);
 void print(const char *str);
 void printc(char c);
 void printf(const char *str, ...);
+void debugf(const char *str, ...);
 uint8_t attribute(uint8_t fc, uint8_t bc);
 void clear(uint8_t color = BG_BLUE | FG_WHITE);
 void print_hex(uint8_t byte);

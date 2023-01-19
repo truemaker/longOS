@@ -1,5 +1,6 @@
 #include <heap.h>
 #include <memory.h>
+#include <vga.h>
 
 void* heap_start;
 void* heap_end;
@@ -27,6 +28,7 @@ void free(void* addr) {
     seg->free = true;
     seg->combine_forward();
     seg->combine_backward();
+    debugf("Free %h\n\r",seg);
 }
 
 void* malloc(size_t size) {
@@ -41,10 +43,12 @@ void* malloc(size_t size) {
             if (seg->size > size) {
                 seg->split(size);
                 seg->free = false;
+                debugf("Alloc %h %h\n\r",seg,size);
                 return (void*)((size_t)seg + sizeof(heap_seg_header_t));
             }
             if (seg->size == size) {
                 seg->free = false;
+                debugf("Alloc %h %h\n\r",seg,size);
                 return (void*)((size_t)seg + sizeof(heap_seg_header_t));
             }
         }

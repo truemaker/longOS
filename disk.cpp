@@ -55,6 +55,7 @@ void reset_device(device_t* dev) {
 }
 
 void print_device(device_t* dev) {
+    if (dev->type == DEV_DISCONNECTED) return;
     printf("Name: %s\n\rBase: %h\n\rControl: %h\n\rDrive: %c\n\rType: ",dev->dev_name,dev->base,dev->dev_ctl,(dev->master_slave_bit & 0x10) ? 'B' : 'A');
     switch(dev->type) {
         case DEV_DISCONNECTED: print("Not Connected"); break;
@@ -145,5 +146,5 @@ void print_mbr(mbr_t* mbr) {
     print_partition(&mbr->partition2);
     print("\n\rPartition 3: \n\r");
     print_partition(&mbr->partition3);
-    printf("\n\rValid: %s", (mbr->signature == 0xAA55)?"Yes":"No");
+    printf("\n\rValid: %s\n\r", (mbr->signature == 0xAA55)?"Yes":"No");
 }

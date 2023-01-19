@@ -10,9 +10,30 @@
 #include <cfs.h>
 #include <heap.h>
 
-uint16_t buffer[256];
-
 ptm_t* g_PTM = NULL;
+
+bool test_heap() {
+    void* a = malloc(0x100);
+    uint64_t aaddr = (uint64_t)a;
+    void* b = malloc(0x100);
+    uint64_t baddr = (uint64_t)b;
+    void* c = malloc(0x100);
+    void* d = malloc(0x100);
+    //printf("A: %h\n\rB: %h\n\rC: %h\n\rD: %h\n\r",a,b,c,d);
+    free(b);
+    void* e = malloc(0x100);
+    uint64_t eaddr = (uint64_t)e;
+    //printf("E: %h\n\r",e);
+    free(a);
+    free(e);
+    void* f = malloc(0x200);
+    uint64_t faddr = (uint64_t)f;
+    //printf("F: %h\n\r",f);
+    free(c);
+    free(d);
+    free(f);
+    return (eaddr==baddr) && (aaddr==faddr);
+}
 
 ptm_t init_paging() {
     pt_t* pml4 = (pt_t*)request_page();
@@ -51,10 +72,16 @@ extern "C" void main() {
     convert_mmap_to_bmp();
     
     g_PTM = &init_paging();
+    init_heap((void*)0x0000100000000000,0x10);
+    if (!test_heap()) {
+        print("HEAP: Test failed!");
+        asm("cli");
+        for (;;);
+    }
     
     print_segments();
-    clear();
     print("Init disk...\n\r");
+
     device_t dev0 = device_t(0x1f0,0x3F6,0xA0,"Disk 1");
     init_disk(&dev0);
     print_device(&dev0);
@@ -71,25 +98,15 @@ extern "C" void main() {
     init_disk(&dev3);
     print_device(&dev3);
 
+    uint16_t *buffer = (uint16_t*)malloc(2*256);
     read_disk(&dev0,(uint8_t*)buffer,0,1);
     mbr_t* mbr = (mbr_t*)(&buffer[0xDB]);
-    //print_mbr(mbr);
-    //cfs_t cfs = cfs_t(mbr->partition0,&dev0, g_PTM);
-    //cfs.list_files();
-    clear();
-    init_heap((void*)0x0000100000000000,0x10);
-    void* a = malloc(0x100);
-    void* b = malloc(0x100);
-    void* c = malloc(0x100);
-    void* d = malloc(0x100);
-    printf("A: %h\n\rB: %h\n\rC: %h\n\rD: %h\n\r",a,b,c,d);
-    free(b);
-    void* e = malloc(0x100);
-    printf("E: %h\n\r",e);
-    free(a);
-    free(c);
-    free(d);
-    free(e);
+    print_mbr(mbr);
+
+    cfs_t cfs = cfs_t(mbr->partition0,&dev0, g_PTM);
+    cfs.list_files();
+    free(buffer);
+
     for (;;);
     return;
 }

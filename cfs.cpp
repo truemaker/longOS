@@ -63,7 +63,8 @@ void cfs::print_file(file_entry* file) {
     print(" ");
     const char* units[] = {"Bytes", "KB", "MB", "GB"};
     uint8_t unit = 0;
-    uint64_t display = file->size * header.sectors_per_block * 512;
+    uint32_t size = file->size_lo | (file->pos_mid << 8) | (file->pos_hi << 16);
+    uint64_t display = size * header.sectors_per_block * 512;
     while (display > 10240 && unit < 4) {
         display /= 1024;
         unit++;
@@ -105,7 +106,8 @@ void cfs::recalculate_header() {
     file_entry_t* file_list = files;
     for (uint64_t i = 0; (i < ((header.root_dir_size * header.sectors_per_block * 512) / 12)); i++) {
         if (file_list->flags&CFS_FILE_FLAG_PRESENT!=0) {
-            used += file_list->size;
+            uint32_t size = file_list->size_lo | (file_list->pos_mid << 8) | (file_list->pos_hi << 16);
+            used += size;
         }
         file_list = (file_entry_t*)((uint64_t)file_list + 12);
     }

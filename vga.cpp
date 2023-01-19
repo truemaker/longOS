@@ -4,6 +4,7 @@
 #include <stdarg.h>
 #include <debug.h>
 #include <memory.h>
+#include <defines.h>
 
 uint16_t vga_pos = 0;
 
@@ -38,6 +39,7 @@ void print(const char *str) {
         printc(*cPtr);
         cPtr++;
     }
+    set_cursor_pos(vga_pos);
 }
 
 void printc(char c) {
@@ -50,7 +52,7 @@ void printc(char c) {
             break;
         default:
             *(VGA_MEM+vga_pos*2) = c;
-            set_cursor_pos(vga_pos+1);
+            vga_pos++;
     }
 }
 
@@ -158,7 +160,14 @@ void printf(const char* str, ...) {
         }
         cPtr++;
     }
+    set_cursor_pos(vga_pos);
     va_end(ap);
+}
+
+void debugf(const char *str, ...) {
+#ifdef DEBUG
+    printf(str);
+#endif
 }
 
 uint8_t attribute(uint8_t fc, uint8_t bc) {
