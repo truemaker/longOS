@@ -45,4 +45,5 @@ typedef struct cfs {
     void list_files();
     void cfs::print_file(file_entry_t* file);
     void cfs::recalculate_header();
+    void* cfs::read_file(uint64_t);
 } cfs_t;

@@ -5,6 +5,7 @@
 #include <debug.h>
 #include <memory.h>
 #include <defines.h>
+#include <serial.h>
 
 uint16_t vga_pos = 0;
 
@@ -53,7 +54,11 @@ void printc(char c) {
         default:
             *(VGA_MEM+vga_pos*2) = c;
             vga_pos++;
+            if (vga_pos > VGA_WIDTH*VGA_HEIGHT) set_cursor_pos(vga_pos);
     }
+#ifdef DEBUG_SERIAL
+    write_serial(c);
+#endif
 }
 
 char intToStringOutput[128];

@@ -1,5 +1,6 @@
 #include <cfs.h>
 #include <vga.h>
+#include <heap.h>
 
 uint8_t fsbuffer[512];
 
@@ -77,12 +78,12 @@ void cfs::list_files() {
     fill_volume_name(header.vid,fsbuffer);
     printf("Volume %s contains:\n\r",fsbuffer);
     file_entry_t* file_list = files;
-    for (uint64_t i = 0; (i < ((header.root_dir_size * header.sectors_per_block * 512) / 12)); i++) {
+    for (uint64_t i = 0; (i < ((header.root_dir_size * header.sectors_per_block * 512) / 16)); i++) {
         if (file_list->flags&CFS_FILE_FLAG_PRESENT!=0) {
             print_file(file_list);
             //printf("%h\n\r",file_list->flags);
         }
-        file_list = (file_entry_t*)((uint64_t)file_list + 12);
+        file_list = (file_entry_t*)((uint64_t)file_list + 16);
     }
     const char* units[] = {"Bytes", "KB", "MB", "GB"};
     uint8_t unitf = 0;
@@ -104,12 +105,20 @@ void cfs::recalculate_header() {
     uint16_t blocks = header.total_blocks;
     uint64_t used = 0;
     file_entry_t* file_list = files;
-    for (uint64_t i = 0; (i < ((header.root_dir_size * header.sectors_per_block * 512) / 12)); i++) {
+    for (uint64_t i = 0; (i < ((header.root_dir_size * header.sectors_per_block * 512) / 16)); i++) {
         if (file_list->flags&CFS_FILE_FLAG_PRESENT!=0) {
             uint32_t size = file_list->size_lo | (file_list->pos_mid << 8) | (file_list->pos_hi << 16);
             used += size;
         }
-        file_list = (file_entry_t*)((uint64_t)file_list + 12);
+        file_list = (file_entry_t*)((uint64_t)file_list + 16);
     }
     header.free_blocks = blocks - used;
+}
+
+void* cfs::read_file(uint64_t id) {
+    file_entry_t* file = (file_entry_t*)files+id;
+    if (!(file->flags & CFS_FILE_FLAG_PRESENT)) {print("File non existent");}
+    uint8_t* buffer = (uint8_t*)malloc(file->size_lo*header.sectors_per_block*512);
+    read_disk(dev,buffer,file->pos_lo*header.sectors_per_block,file->size_lo*header.sectors_per_block);
+    return (void*)buffer;
 }

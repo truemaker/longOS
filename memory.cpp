@@ -34,6 +34,11 @@ uint64_t get_usable_memory_size() {
     return size;
 }
 
+bool is_free(void* addr) {
+    uint64_t index = (uint64_t)addr / 0x1000;
+    return !memory_map[index];
+}
+
 uint64_t align_to_start(uint64_t value, uint64_t alignment) {
     return value - (value % alignment);
 }
@@ -130,6 +135,17 @@ void memset(void* addr, uint8_t val, uint64_t count) {
     }
 }
 
+bool memcmp(void* a, void* b, uint64_t count) {
+    uint8_t* ba = (uint8_t*)a;
+    uint8_t* bb = (uint8_t*)b;
+    for (uint64_t i = 0; i < count; i++) {
+        if (*ba != *bb) return false;
+        ba++;
+        bb++;
+    }
+    return true;
+}
+
 void memcpy(void* dst, void* src, uint64_t count) {
     uint8_t* bdst = (uint8_t*)dst;
     uint8_t* bsrc = (uint8_t*)src;
@@ -163,10 +179,19 @@ void print_segments() {
     printf("Used: %x %s\n\rFree: %x %s\n\rReserved: %x %s\n\r", displayu, unit[unitu], displayf, unit[unitf], displayr, unit[unitr]);
 }
 
-void* request_page() {
+void* request_page(bool map_page=false) {
+    debugf("Requested new page\n\r");
     for (uint64_t i = 0; i < memory_map.size; i++) {
         if (!memory_map[i]) {
             lock_page((void*)(i*0x1000));
+            if (map_page) {
+                if (!(g_PTM == ((void*)0))) {
+                    void* addr = g_PTM->find_free(1);
+                    g_PTM->mark_page_used(addr);
+                    g_PTM->map(addr,(void*)(i*0x1000));
+                    return addr;
+                }
+            }
             return (void*)(i*0x1000);
         }
     }
@@ -175,7 +200,7 @@ void* request_page() {
     return nullptr; // Hope this never happens
 }
 
-void* request_pages(uint64_t count) {
+void* request_pages(uint64_t count,bool map_page=true) {
     uint64_t move_by = 0;
     for (uint64_t i = 0; i < memory_map.size-count; i+=move_by) {
         bool usable = true;
@@ -183,13 +208,32 @@ void* request_pages(uint64_t count) {
             if (memory_map[i+j]) {
                 move_by = j+1;
                 usable = false;
+                continue;
             }
         }
         if (usable) {
             lock_pages((void*)(i*0x1000),count);
+            if (map_page) {
+                if (!(g_PTM == ((void*)0))) {
+                    if (!g_PTM->is_used((void*)(i*0x1000))) {
+                        void* addr = (void*)(0x1000*i);
+                        g_PTM->map(addr,addr);
+                        return addr;
+                    } else {
+                        void* addr = g_PTM->find_free(count);
+                        for (uint64_t j=0;j<count;j++) {
+                            g_PTM->mark_page_used((void*)((uint64_t)addr + (j*0x1000)));
+                            g_PTM->map((void*)((uint64_t)addr + (j*0x1000)),(void*)((i+j)*0x1000));
+                        }
+                        return addr;
+                    }
+                }
+            }
             return (void*)(i*0x1000);
         }
     }
+    print("Out of memory");
+    for (;;);
     return nullptr; // Hope this never happens
 }
 
@@ -220,6 +264,7 @@ void clear_table(pt_t* pt) {
 }
 
 void ptm_t::map(void* vmem, void* pmem) {
+    debugf("Mapping %h -> %h\n\r",vmem,pmem);
     page_index_t pi = page_index_t((uint64_t)vmem);
     pd_entry_t pde;
     pde = pml4->entries[pi.pdp_i];
@@ -269,6 +314,7 @@ void ptm_t::map(void* vmem, void* pmem) {
     pde.p = true;
     pde.rw = true;
     pt->entries[pi.p_i] = pde;
+    debugf("Mapping complete\n\r");
 }
 
 void ptm_t::unmap(void* vmem) {
@@ -348,14 +394,24 @@ void ptm_t::mark_page_unused(void* page) {
     vmmap.set(pageIndex,0);
 }
 
+bool ptm_t::is_used(void* page) {
+    uint64_t index = (uint64_t)page/0x1000;
+    if (index > size) return get_paddr(page) != (void*)0;
+    return vmmap[index];
+}
+
 void* ptm_t::allocate_page() {
+    allocating = true;
     for (uint64_t i = 0; i<size; i++) {
-        if (vmmap[i]) continue;
+        if (is_used((void*)(i*0x1000))) continue;
         mark_page_used((void*)(i*0x1000));
         map((void*)(i*0x1000),request_page());
         debugf("PALLOC %h\n\r",i*0x1000);
+        allocating = false;
         return (void*)(i*0x1000);
     }
+    print("Out of virtual memory");
+    for (;;);
     return (void*)0;
 }
 
@@ -366,11 +422,12 @@ void ptm_t::free_page(void* page) {
 }
 
 void* ptm_t::allocate_pages(uint64_t count) {
+    debugf("Allocating %x pages\n\r",count);
     uint64_t move_by = 0;
     for (uint64_t i = 0; i < vmmap.size-count; i+=move_by) {
         bool usable = true;
         for (uint64_t j = 0; j < count; j++) {
-            if (vmmap[i+j]) {
+            if (is_used((void*)((i+j)*0x1000))) {
                 move_by = j+1;
                 usable = false;
             }
@@ -379,6 +436,28 @@ void* ptm_t::allocate_pages(uint64_t count) {
             for (uint64_t j = 0; j < count; j++) {
                 mark_page_used((void*)((i+j)*0x1000));
                 map((void*)((i+j)*0x1000),request_page());
+            }
+            return (void*)(i*0x1000);
+        }
+    }
+    print("Out of virtual memory");
+    for (;;);
+    return nullptr; // Hope this never happens
+}
+
+void* ptm_t::find_free(uint64_t count) {
+    uint64_t move_by = 0;
+    for (uint64_t i = 0; i < vmmap.size-count; i+=move_by) {
+        bool usable = true;
+        for (uint64_t j = 0; j < count; j++) {
+            if ((void*)((i+j)*0x1000)) {
+                move_by = j+1;
+                usable = false;
+            }
+        }
+        if (usable) {
+            for (uint64_t j = 0; j < count; j++) {
+                mark_page_used((void*)((i+j)*0x1000));
             }
             return (void*)(i*0x1000);
         }

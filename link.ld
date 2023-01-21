@@ -17,6 +17,8 @@ INPUT (
     disk.o
     cfs.o
     heap.o
+    font.o
+    acpi.o
 )
 
 OUTPUT (
@@ -30,8 +32,9 @@ SECTIONS {
 
     .text : ALIGN(0x1000) {
         *(.text)
-        end_code = .;
+        
     }
+    end_code = .;
     .idt BLOCK(0x1000) : ALIGN(0x1000) {
         _idt = .;
     }

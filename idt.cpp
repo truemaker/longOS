@@ -2,6 +2,7 @@
 #include <vga.h>
 #include <io.h>
 #include <asm.h>
+#include <memory.h>
 
 void pic_remap() {
     uint8_t a1,a2;
@@ -51,8 +52,22 @@ extern "C" void isr1_handler() {
 
 __attribute__((interrupt)) void pagef_handler(interrupt_frame_t* int_frame) {
     asm("cli");
-    printf("A page fault has occured\n\rFault address: %h\n\rPML4: %h\n\rRIP: %h", read_cr2(), read_cr3(),int_frame->rip);
-    for (;;);
+    printf("A page fault has occured\n\rFault address: %h\n\rPML4: %h\n\rRIP: %h\n\rReadable Message: ", read_cr2(), read_cr3(),int_frame->rip);
+    uint64_t err = int_frame->err_code;
+    if (err & 0x4) print("User");
+    else print("Kernel");
+    print(" tried to ");
+    if (err & 0x2) print("write to");
+    else print("read from");
+    print(" a page that is ");
+    if (err & 1) print("present");
+    else print("not present");
+    if (err & (1<<4)) print(" during an instruction fetch");
+    print("\n\r");
+    if (g_PTM) {
+        g_PTM->map((void*)read_cr2(),request_page());
+        asm("sti");
+    } else for (;;);
 }
 
 __attribute__((interrupt)) void doublef_handler(interrupt_frame_t* int_frame) {
@@ -64,5 +79,24 @@ __attribute__((interrupt)) void doublef_handler(interrupt_frame_t* int_frame) {
 __attribute__((interrupt)) void gpf_handler(interrupt_frame_t* int_frame) {
     asm("cli");
     printf("A general protection fault has occured\n\rCS: %h\n\rRIP: %h\n\r%t",int_frame->cs,int_frame->rip);
+    print("Readable Message: ");
+    if (int_frame->err_code == 0) print("Not Segment Related");
+    else {
+        print("Segment error was caused ");
+        if (int_frame->err_code & 1) print("externally");
+        else {
+            print("internally\n\rIt occured in the ");
+            switch ((0b110 & int_frame->err_code) >> 1) {
+                case 0: print("GDT");break;
+                case 1: print("IDT");break;
+                case 2: print("LDT");break;
+                case 3: print("IDT");break;
+                default: print("???");
+            }
+            print(" at selector ");
+            print_hex((0xfff8 & int_frame->err_code) >> 3);
+        }
+    }
+    print("\n\r");
     for (;;);
 }

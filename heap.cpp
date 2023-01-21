@@ -32,23 +32,27 @@ void free(void* addr) {
 }
 
 void* malloc(size_t size) {
+    debugf("Attempt allocate %x bytes\n\r",size);
     if (size % 0x10 > 0) {
         size -= size%0x10;
         size += 0x10;
+        debugf("Attempt allocate (realigned) %x bytes\n\r",size);
     }
     if (size == 0) return NULL;
+    debugf("Start allocation of %x bytes\n\r",size);
     heap_seg_header_t* seg = (heap_seg_header_t*)heap_start;
     while (true) {
         if (seg->free) {
-            if (seg->size > size) {
+            debugf("Found free segment checking for %x bytes\n\r",size);
+            if (seg->size > (size + 0x30)) {
                 seg->split(size);
                 seg->free = false;
                 debugf("Alloc %h %h\n\r",seg,size);
                 return (void*)((size_t)seg + sizeof(heap_seg_header_t));
             }
-            if (seg->size == size) {
+            if (seg->size >= size) {
                 seg->free = false;
-                debugf("Alloc %h %h\n\r",seg,size);
+                debugf("Alloc %h %h\n\r",seg,seg->size);
                 return (void*)((size_t)seg + sizeof(heap_seg_header_t));
             }
         }
@@ -60,6 +64,7 @@ void* malloc(size_t size) {
 }
 
 heap_seg_header_t* heap_seg_header_t::split(size_t size) {
+    debugf("Attempt split to size %x bytes\n\r",size);
     if (size < 0x10) return NULL;
     size_t splitSize = this->size - size - sizeof(heap_seg_header_t);
     if (splitSize <  0x10) return NULL;
@@ -76,15 +81,16 @@ heap_seg_header_t* heap_seg_header_t::split(size_t size) {
 }
 
 void expand_heap(size_t size) {
-    if (size % 0x1000) {
+    if (size % 0x1000 > 0) {
         size -= size % 0x1000;
         size += 0x1000;
     }
+    debugf("Attempt extend by %x bytes\n\r",size);
     size_t pages = size/0x1000;
     heap_seg_header_t* new_seg = (heap_seg_header_t*)heap_end;
     for (size_t i = 0; i < pages; i++) {
-        g_PTM->map(heap_end,request_page());
         g_PTM->mark_page_used(heap_end);
+        g_PTM->map(heap_end,request_page(false));
         heap_end = (void*)((size_t)heap_end+0x1000);
     }
     new_seg->free = true;
