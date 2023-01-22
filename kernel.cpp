@@ -11,6 +11,8 @@
 #include <heap.h>
 #include <font.h>
 #include <acpi.h>
+#include <timer.h>
+#include <asm.h>
 
 ptm_t* g_PTM = NULL;
 
@@ -21,16 +23,16 @@ bool test_heap() {
     uint64_t baddr = (uint64_t)b;
     void* c = malloc(0x100);
     void* d = malloc(0x100);
-    //printf("A: %h\n\rB: %h\n\rC: %h\n\rD: %h\n\r",a,b,c,d);
+    debugf("A: %h\n\rB: %h\n\rC: %h\n\rD: %h\n\r",a,b,c,d);
     free(b);
     void* e = malloc(0x100);
     uint64_t eaddr = (uint64_t)e;
-    //printf("E: %h\n\r",e);
+    debugf("E: %h\n\r",e);
     free(a);
     free(e);
     void* f = malloc(0x200);
     uint64_t faddr = (uint64_t)f;
-    //printf("F: %h\n\r",f);
+    debugf("F: %h\n\r",f);
     free(c);
     free(d);
     free(f);
@@ -49,7 +51,7 @@ ptm_t init_paging() {
     asm("mov %0, %%cr3"::"r"(pml4));
     unlock_old_page_tables();
     print("done\n\r");
-    mmap_entry_t* mmap = (mmap_entry_t*)0x6000;
+    mmap_entry_t* mmap = (mmap_entry_t*)MEMORY_MAP;
     for (uint64_t i = 0; i < memory_region_count; i++) {
         uint8_t* base = (uint8_t*)mmap[i].base;
         if (mmap[i].type != 1) {
@@ -105,13 +107,15 @@ extern "C" void main() {
     printf("Welcome to %s %s\n\r","longOS","dev snapshot");
     asm("cli");
     init_idt();
+    PIT::init_timer();
     
     convert_mmap_to_bmp();
     print_memory();
+    //for (;;);
 
     g_PTM = &init_paging();
     ACPI::init_acpi();
-    init_heap((void*)0x0000100000000000,0x100);
+    init_heap((void*)0x0000100000000000,0x10);
 
     if (!test_heap()) {
         print("HEAP: Test failed!");
@@ -128,8 +132,9 @@ extern "C" void main() {
         default:
             print("Unknown");
     }
-
     print("\n\r");
+    ACPI::enable_acpi();
+    ACPI::shutdown();
 
     print_segments();
     //init_disk();

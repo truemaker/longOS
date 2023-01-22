@@ -3,6 +3,9 @@
 #include <bitmap.h>
 extern uint8_t memory_region_count;
 
+#define MEMORY_MAP 0x7000
+#define PAGE_SIZE ((uint64_t)0x1000)
+
 typedef struct mmap_entry {
     uint64_t base;
     uint64_t size;
@@ -46,6 +49,7 @@ typedef struct ptm {
     void map(void* vmem, void* pmem);
     void unmap(void* vmem);
     void* get_paddr(void* vaddr);
+    bool get_present(void* vaddr);
     void* allocate_page();
     void* allocate_pages(uint64_t);
     void mark_page_used(void*);

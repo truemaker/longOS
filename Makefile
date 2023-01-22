@@ -27,6 +27,7 @@ build:
 	$(GPP) $(ARGS64) "heap.cpp" -o "heap.o"
 	$(GPP) $(ARGS64) "font.cpp" -o "font.o"
 	$(GPP) $(ARGS64) "acpi.cpp" -o "acpi.o"
+	$(GPP) $(ARGS64) "timer.cpp" -o "timer.o"
 	$(LD) -T "link.ld" -Map memory.map
 	cat mbr.bin boot.bin kernel.bin > OS.bin
 	dd if=/dev/zero of=image.img bs=512 count=2880

@@ -7,8 +7,8 @@ uint64_t reserved_mem;
 uint64_t used_mem;
 bitmap_t memory_map;
 void print_memory() {
-    for (int i = 0; i < memory_region_count; i++) {
-        mmap_entry_t* entry = (mmap_entry_t*)0x6000;
+    for (uint64_t i = 0; i < memory_region_count; i++) {
+        mmap_entry_t* entry = (mmap_entry_t*)MEMORY_MAP;
         entry += i;
         printf("Memory region at %h with size %h is %s\n\r", entry->base, entry->size, (entry->type == 1) ? "Usable" : ((entry->type == 3) ? "ACPI reclaimable" : ((entry->type == 4) ? "ACPI NVS Storage" : ((entry->type == 5) ? "broken" : "Reserved"))));
     }
@@ -16,10 +16,11 @@ void print_memory() {
 
 uint64_t get_memory_size() {
     uint64_t size = 0;
-    for (uint32_t i = 0; i < memory_region_count; i++) {
-        mmap_entry_t* entry = (mmap_entry_t*)0x6000;
-        entry += i;
+    mmap_entry_t* entry = (mmap_entry_t*)MEMORY_MAP;
+    for (uint64_t i = 0; i < memory_region_count; i++) {
+        if (entry->base > size) size = entry->base;
         size += entry->size;
+        entry++;
     }
     return size;
 }
@@ -27,7 +28,7 @@ uint64_t get_memory_size() {
 uint64_t get_usable_memory_size() {
     uint64_t size = 0;
     for (uint32_t i = 0; i < memory_region_count; i++) {
-        mmap_entry_t* entry = (mmap_entry_t*)0x6000;
+        mmap_entry_t* entry = (mmap_entry_t*)MEMORY_MAP;
         entry += i;
         if (entry->type == 1) size += entry->size;
     }
@@ -36,7 +37,7 @@ uint64_t get_usable_memory_size() {
 
 bool is_free(void* addr) {
     uint64_t index = (uint64_t)addr / 0x1000;
-    return !memory_map[index];
+    return !memory_map.get(index);
 }
 
 uint64_t align_to_start(uint64_t value, uint64_t alignment) {
@@ -52,41 +53,41 @@ bool is_in_entry(mmap_entry_t* entry, void* addr) {
 }
 
 void convert_mmap_to_bmp() {
-    uint64_t pages = get_memory_size() / 4096;
-    uint64_t bytes = pages / 32;
-    printf("Memory bitmap is %x bytes and contains %x pages\n\r", bytes*4, pages);
+    uint64_t pages = get_memory_size() / 0x1000;
+    uint64_t bytes = pages / 8;
+    printf("Memory bitmap is %x bytes and contains %x pages\n\r", bytes, pages);
     memory_map = bitmap_t();
     memory_map.size = pages+1;
     memory_map.bytes = _mmap;
-    memset(_mmap,0,bytes*4);
+    memset(_mmap,0,0x4000);
     free_mem = get_memory_size();
     for (uint64_t i = 0; i < pages; i++) {
         bool free;
         for (uint64_t e = 0; e < memory_region_count; e++) {
-            mmap_entry_t* entry = (mmap_entry_t*)0x6000;
+            mmap_entry_t* entry = (mmap_entry_t*)MEMORY_MAP;
             entry += e;
             if (is_in_entry(entry, (void*)(i*0x1000))) free = entry->type == 1;
         }
         if (!free) reserve_page((void*)(i*0x1000));
     }
-    lock_pages((void*)0x2000,4); // Lock old PTs
+    lock_pages((void*)&_end_all,7); // Lock old PTs
     lock_pages((void*)&_start_all,((uint64_t)&_end_all - (uint64_t)&_start_all) / 4096); // Lock kernel
-    lock_page((void*)0x6000); // Lock MMAP
+    lock_page((void*)MEMORY_MAP); // Lock MMAP
 }
 
 void unlock_old_page_tables() {
-    free_pages((void*)0x2000,4);
+    free_pages((void*)&_end_all,7);
 }
 
 void reserve_page(void* addr) {
-    if (memory_map[align_to_start((uint64_t)addr,0x1000)/0x1000]) return;
+    if (memory_map.get(align_to_start((uint64_t)addr,0x1000)/0x1000)) return;
     memory_map.set(align_to_start((uint64_t)addr,0x1000)/0x1000,1);
     reserved_mem += 0x1000;
     free_mem -= 0x1000;
 }
 
 void unreserve_page(void* addr) {
-    if (!memory_map[align_to_start((uint64_t)addr,0x1000)/0x1000]) return;
+    if (!memory_map.get(align_to_start((uint64_t)addr,0x1000)/0x1000)) return;
     memory_map.set(align_to_start((uint64_t)addr,0x1000)/0x1000,0);
     reserved_mem -= 0x1000;
     free_mem += 0x1000;
@@ -104,15 +105,19 @@ void unreserve_pages(void* addr, uint64_t count) {
     }
 }
 void lock_page(void* addr) {
-    if (memory_map[align_to_start((uint64_t)addr,0x1000)/0x1000]) return;
-    memory_map.set(align_to_start((uint64_t)addr,0x1000)/0x1000,1);
+    uint64_t index = align_to_start((uint64_t)addr,0x1000)/0x1000;
+    if ((uint64_t)addr >= get_memory_size()) {printf("Outside of physical memory: lock\n\r%t");asm("cli");for(;;);}
+    if (memory_map.get(index)) return;
+    memory_map.set(index,1);
     used_mem += 0x1000;
     free_mem -= 0x1000;
 }
 
 void free_page(void* addr) {
-    if (!memory_map[align_to_start((uint64_t)addr,0x1000)/0x1000]) return;
-    memory_map.set(align_to_start((uint64_t)addr,0x1000)/0x1000,0);
+    uint64_t index = align_to_start((uint64_t)addr,0x1000)/0x1000;
+    if ((uint64_t)addr >= get_memory_size()) {printf("Outside of physical memory: free\n\r%t");asm("cli");for(;;);}
+    if (memory_map.get(index)) return;
+    memory_map.set(index,0);
     used_mem -= 0x1000;
     free_mem += 0x1000;
 }
@@ -181,60 +186,47 @@ void print_segments() {
 
 void* request_page(bool map_page=false) {
     debugf("Requested new page\n\r");
-    for (uint64_t i = 0; i < memory_map.size; i++) {
-        if (!memory_map[i]) {
-            lock_page((void*)(i*0x1000));
-            if (map_page) {
-                if (!(g_PTM == ((void*)0))) {
-                    void* addr = g_PTM->find_free(1);
-                    g_PTM->mark_page_used(addr);
-                    g_PTM->map(addr,(void*)(i*0x1000));
-                    return addr;
-                }
-            }
-            return (void*)(i*0x1000);
-        }
+    uint64_t addr = 0;
+    uint64_t mem_size = align_to_start(get_memory_size(),0x1000);
+    debugf("Mem Size: %h\n\r",mem_size);
+    while (addr<mem_size) {
+        debugf("Checking %h\n\r",addr);
+        if (!memory_map.get(addr/0x1000)) break;
+        debugf("Checked %h\n\r",addr);
+        addr += 0x1000;
     }
-    print("Out of memory");
-    for (;;);
-    return nullptr; // Hope this never happens
+    if (!(addr < (align_to_start(get_memory_size(),0x1000)))) { print("Out of memory: Single page"); for (;;); return 0; }
+    if (addr > get_memory_size()) { print("Something went wrong while allocating"); for(;;); return 0; }
+    lock_page((void*)addr);
+    debugf("Found page %h\n\r", addr);
+    return (void*)addr;
 }
 
 void* request_pages(uint64_t count,bool map_page=true) {
-    uint64_t move_by = 0;
-    for (uint64_t i = 0; i < memory_map.size-count; i+=move_by) {
-        bool usable = true;
-        for (uint64_t j = 0; j < count; j++) {
-            if (memory_map[i+j]) {
-                move_by = j+1;
-                usable = false;
-                continue;
-            }
+    debugf("Requested new pages\n\r");
+    uint64_t i = 0;
+    uint64_t pages = 0;
+    while (i<(get_memory_size()/0x1000)) {
+        debugf("Checking %h\n\r",i*0x1000);
+        while (i<(get_memory_size()/0x1000)) {
+            if (!memory_map.get(i)) break;
+            debugf("Checked %h x\n\r",i*0x1000);
+            pages = 0;
+            i++;
+            debugf("Checking %h\n\r",i*0x1000);
         }
-        if (usable) {
-            lock_pages((void*)(i*0x1000),count);
-            if (map_page) {
-                if (!(g_PTM == ((void*)0))) {
-                    if (!g_PTM->is_used((void*)(i*0x1000))) {
-                        void* addr = (void*)(0x1000*i);
-                        g_PTM->map(addr,addr);
-                        return addr;
-                    } else {
-                        void* addr = g_PTM->find_free(count);
-                        for (uint64_t j=0;j<count;j++) {
-                            g_PTM->mark_page_used((void*)((uint64_t)addr + (j*0x1000)));
-                            g_PTM->map((void*)((uint64_t)addr + (j*0x1000)),(void*)((i+j)*0x1000));
-                        }
-                        return addr;
-                    }
-                }
-            }
-            return (void*)(i*0x1000);
-        }
+        if (!(i < (get_memory_size()/0x1000))) { print("Out of memory: Multiple"); for (;;); return 0; }
+        debugf("Checked %h v %x\n\r",i*0x1000,pages+1);
+        pages++;
+        if (pages > (count-1)) break;
+        i++;
     }
-    print("Out of memory");
-    for (;;);
-    return nullptr; // Hope this never happens
+    if (pages < count) { print("Out of memory: Multiple page"); for (;;); return 0; }
+    uint64_t addr = 0x1000 * i;
+    if (addr > get_memory_size()) { print("Something went wrong while allocating"); for(;;); return 0; }
+    lock_pages((void*)addr - (0x1000*count),count);
+    debugf("Found pages %h - %h\n\r", addr - (0x1000*count), addr);
+    return (void*)addr;
 }
 
 page_index::page_index(uint64_t addr) {
@@ -252,8 +244,9 @@ page_index::page_index(uint64_t addr) {
 ptm_t::ptm(pt_t* pml4In, uint64_t page_count) {
     pml4 = pml4In;
     vmmap = bitmap_t();
-    vmmap.size = page_count / 32 + 1;
-    vmmap.bytes = (uint32_t*)request_pages(page_count / 32 / 0x1000 + 1);
+    vmmap.size = page_count + 1;
+    vmmap.bytes = (uint32_t*)request_pages((page_count / 0x1000 / 8 + 1));
+    memset(vmmap.bytes,0,(page_count / 0x1000 / 8 + 1)*0x1000);
     size = page_count;
 }
 
@@ -264,8 +257,12 @@ void clear_table(pt_t* pt) {
 }
 
 void ptm_t::map(void* vmem, void* pmem) {
-    debugf("Mapping %h -> %h\n\r",vmem,pmem);
-    page_index_t pi = page_index_t((uint64_t)vmem);
+    vmem = (void*)(((uint64_t)vmem >> 12) << 12);
+    vmem = (void*)(((uint64_t)vmem >> 12) << 12);
+    pmem = (void*)(((uint64_t)pmem >> 12) << 12);
+    pmem = (void*)(((uint64_t)pmem >> 12) << 12);
+    debugf("Mapping %h -> %h\n\rPML4: %h\n\r",vmem,pmem,pml4);
+    page_index_t pi = page_index_t(align_to_start((uint64_t)vmem,0x1000));
     pd_entry_t pde;
     pde = pml4->entries[pi.pdp_i];
     pt_t* pdp;
@@ -280,7 +277,7 @@ void ptm_t::map(void* vmem, void* pmem) {
     } else {
         pdp = (pt_t*)((uint64_t)pde.addr << 12);
     }
-
+    debugf("PDP: %h\n\r",pdp);
     pde = pdp->entries[pi.pd_i];
     pt_t* pd;
     if (!pde.p) {
@@ -294,7 +291,7 @@ void ptm_t::map(void* vmem, void* pmem) {
     } else {
         pd = (pt_t*)((uint64_t)pde.addr << 12);
     }
-
+    debugf("PD: %h\n\r",pd);
     pde = pd->entries[pi.pt_i];
     pt_t* pt;
     if (!pde.p) {
@@ -308,12 +305,13 @@ void ptm_t::map(void* vmem, void* pmem) {
     } else {
         pt = (pt_t*)((uint64_t)pde.addr << 12);
     }
-
+    debugf("PT: %h\n\r",pt);
     pde = pt->entries[pi.p_i];
     pde.addr = (uint64_t)pmem >> 12;
     pde.p = true;
     pde.rw = true;
     pt->entries[pi.p_i] = pde;
+    invlpg(vmem);
     debugf("Mapping complete\n\r");
 }
 
@@ -350,6 +348,38 @@ void ptm_t::unmap(void* vmem) {
     debugf("Unmap %h\n\r",vmem);
 }
 
+bool ptm_t::get_present(void* vaddr) {
+    uint64_t offset = ((uint64_t)vaddr) % 0x1000;
+    page_index_t pi = page_index_t(align_to_start((uint64_t)vaddr,0x1000));
+    pd_entry_t pde;
+    pde = pml4->entries[pi.pdp_i];
+    pt_t* pdp;
+    if (!pde.p) {
+        return 0;
+    } else {
+        pdp = (pt_t*)((uint64_t)pde.addr << 12);
+    }
+
+    pde = pdp->entries[pi.pd_i];
+    pt_t* pd;
+    if (!pde.p) {
+        return 0;
+    } else {
+        pd = (pt_t*)((uint64_t)pde.addr << 12);
+    }
+
+    pde = pd->entries[pi.pt_i];
+    pt_t* pt;
+    if (!pde.p) {
+        return 0;
+    } else {
+        pt = (pt_t*)((uint64_t)pde.addr << 12);
+    }
+
+    pde = pt->entries[pi.p_i];
+    return pde.p;
+}
+
 void* ptm_t::get_paddr(void* vaddr) {
     uint64_t offset = ((uint64_t)vaddr) % 0x1000;
     page_index_t pi = page_index_t(align_to_start((uint64_t)vaddr,0x1000));
@@ -383,21 +413,23 @@ void* ptm_t::get_paddr(void* vaddr) {
 }
 
 void ptm_t::mark_page_used(void* page) {
-    uint64_t pageIndex = align_to_start((uint64_t)page,0x1000);
+    uint64_t pageIndex = align_to_start((uint64_t)page,0x1000)/0x1000;
+    if (pageIndex >= vmmap.size) return;
     if (vmmap[pageIndex]) return;
     vmmap.set(pageIndex,1);
 }
 
 void ptm_t::mark_page_unused(void* page) {
     uint64_t pageIndex = align_to_start((uint64_t)page,0x1000)/0x1000;
+    if (pageIndex >= vmmap.size) return;
     if (!vmmap[pageIndex]) return;
     vmmap.set(pageIndex,0);
 }
 
 bool ptm_t::is_used(void* page) {
     uint64_t index = (uint64_t)page/0x1000;
-    if (index > size) return get_paddr(page) != (void*)0;
-    return vmmap[index];
+    if (index >= size) return get_present(page);
+    return vmmap.get(index);
 }
 
 void* ptm_t::allocate_page() {

@@ -19,6 +19,7 @@ INPUT (
     heap.o
     font.o
     acpi.o
+    timer.o
 )
 
 OUTPUT (
@@ -39,7 +40,7 @@ SECTIONS {
         _idt = .;
     }
 
-    . = _idt + 0x1000; /* Move by 0x1000 to make space for the idt */
+    . = _idt + 0x1000;
 
     .data : ALIGN(0x1000) {
         *(.data)
@@ -55,5 +56,10 @@ SECTIONS {
         _mmap = .;
     }
     . = _mmap + 0x4000;
+    .stack : ALIGN(0x1000) {
+        _stack_top = .;
+    }
+    _stack = _stack_top + 0x8000;
+    . = _stack;
     _end_all = .;
 }

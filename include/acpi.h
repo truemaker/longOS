@@ -126,4 +126,6 @@ namespace ACPI {
     sdt_header_t* get_table(char*);
     void print_sdt(sdt_header_t* header);
     void print_address(acpi_address_t);
+    void shutdown();
+    void enable_acpi();
 }

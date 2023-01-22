@@ -1,6 +1,8 @@
 #include <acpi.h>
 #include <vga.h>
 #include <memory.h>
+#include <io.h>
+#include <timer.h>
 
 namespace ACPI {
     bool extended = false;
@@ -150,5 +152,90 @@ namespace ACPI {
             }
         }
         return rsdp;
+    }
+
+    void* get_s5() {
+        fadt_t* fadt = (fadt_t*)get_table("FACP");
+        sdt_header_t* dsdt = (sdt_header_t*)fadt->dsdt;
+        if (!memcmp(dsdt->signature,"DSDT",4)) { print("Invalid DSDT.\n\r"); asm("cli"); for (;;); }
+        char* s5_addr = (char*)((uint64_t)dsdt + 36);
+        int dsdt_length = dsdt->length - 36;
+        while (0 < dsdt_length--) {
+            if (memcmp(s5_addr,"_S5_",4)) break;
+            s5_addr++;
+        }
+        if (dsdt_length > 0) {
+            return s5_addr;
+        } else {
+            print("\\_S5_ not present!");
+            asm("cli");
+            for (;;);
+        }
+        return 0;
+    }
+
+    uint16_t get_typa() {
+        char* s5 = (char*)get_s5();
+        if (!((s5[-1]==0x08) || ((s5[-2] == 0x08) && (s5[-1] == '\\'))  && (s5[4] == 0x12))) { print("\\_S5_ parse error."); asm("cli"); for (;;); }
+        s5 += 5;
+        s5 += ((*s5 & 0xC0) >> 6) + 2;
+        if (*s5 == 0x0A) s5++;
+        return *s5  << 10;
+    }
+
+    uint16_t get_typb() {
+        char* s5 = (char*)get_s5();
+        if (!((s5[-1]==0x08) || ((s5[-2] == 0x08) && (s5[-1] == '\\')) && (s5[4] == 0x12))) { print("\\_S5_ parse error."); asm("cli"); for (;;); }
+        s5 += 5;
+        s5 += ((*s5 & 0xC0) >> 6) + 2;
+        if (*s5 == 0x0A) s5++;
+        s5++;
+        if (*s5 == 0x0A) s5++;
+        return *s5  << 10;
+    }
+
+    void shutdown() {
+        enable_acpi(); // Just to make sure
+        fadt_t *fadt = (fadt_t*)get_table("FACP");
+        uint16_t typa = get_typa();
+        print("Powering off in 5 seconds...\n\r");
+        PIT::sleep(5000);
+        print("Sending TYPa...\n\r");
+        outw(fadt->pm1a_control_block,get_typa() | (1<<13));
+        print("Sending TYPb...\n\r");
+        if (fadt->pm1b_control_block != 0) outw(fadt->pm1b_control_block,get_typb() | (1<<13));
+    }
+
+    void enable_acpi() {
+        fadt_t *fadt = (fadt_t*)get_table("FACP");
+        if ((inw(fadt->pm1a_control_block) & (1<<13)) == 0) {
+            if (fadt->acpi_enable != 0 && fadt->smi_command_port != 0) {
+                outb(fadt->smi_command_port,fadt->acpi_enable);
+                uint64_t i = 0;
+                while (inw(fadt->pm1a_control_block) & 1 == 0 && i < 300) {
+                    PIT::sleep(10);
+                    i++;
+                }
+                if (fadt->pm1b_control_block) {
+                    while (inw(fadt->pm1b_control_block) & 1 == 0 && i < 300) {
+                        PIT::sleep(10);
+                        i++;
+                    }
+                }
+                if (i < 300) {
+                    print("ACPI enabled!\n\r");
+                } else {
+                    print("Couldn't enable ACPI");
+                    asm("cli");
+                    for (;;);
+                }
+            } else {
+                print("Can't enable ACPI");
+                asm("cli");
+                for (;;);
+            }
+        } else {
+            print("ACPI already enabled\n\r");
+        }
     }
 }

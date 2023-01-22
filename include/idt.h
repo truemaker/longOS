@@ -30,6 +30,7 @@ typedef struct interrupt_frame interrupt_frame_t;
 
 extern idt64_t _idt[256];
 extern uint64_t isr1;
+extern uint64_t timer;
 extern uint64_t pf;
 extern idt_desc64_t idt_desc;
 void init_idt();
@@ -37,3 +38,4 @@ void register_interrupt(uint64_t id, uint64_t addr);
 __attribute__((interrupt)) void pagef_handler(interrupt_frame_t* int_frame);
 __attribute__((interrupt)) void doublef_handler(interrupt_frame_t* int_frame);
 __attribute__((interrupt)) void gpf_handler(interrupt_frame_t* int_frame);
+__attribute__((interrupt)) void ssf_handler(interrupt_frame_t* int_frame);

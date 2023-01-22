@@ -2,10 +2,13 @@
 #include <asm.h>
 #include <idt.h>
 #include <io.h>
+#include <memory.h>
 struct stackframe {
   struct stackframe* ebp;
   uint64_t rip;
 };
+
+extern uint8_t end_extboot;
 
 void trace(unsigned int frames){
     struct stackframe *stk;
@@ -14,7 +17,15 @@ void trace(unsigned int frames){
     for(unsigned int frame = 0; stk && frame < frames; ++frame)
     {
         // Unwind to previous stack frame
-        printf("    0x%h\n\r", stk->rip);
+        printf("    0x%h : 0x%h ", stk, stk->rip);
+        if (stk->rip < (uint64_t)&_start_all || stk->rip > (uint64_t)&_end_all) {
+          print("-> Interrupt (propably)");
+        } else if (stk->rip < (uint64_t)&end_extboot ) {
+          print("-> Bootloader");
+        } else if (stk->rip > (uint64_t)&end_extboot && stk->rip < (uint64_t)&_end_all) {
+          print("-> Kernel");
+        }
+        print("\n\r");
         stk = stk->ebp;
     }
 }

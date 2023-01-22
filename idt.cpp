@@ -3,6 +3,7 @@
 #include <io.h>
 #include <asm.h>
 #include <memory.h>
+#include <serial.h>
 
 void pic_remap() {
     uint8_t a1,a2;
@@ -35,10 +36,11 @@ void init_idt() {
     register_interrupt(0xe, (uint64_t)&pagef_handler);
     register_interrupt(0x8, (uint64_t)&doublef_handler);
     register_interrupt(0xd, (uint64_t)&gpf_handler);
+    register_interrupt(0xc, (uint64_t)&ssf_handler);
 
     pic_remap();
-    outb(0x21, 0xfd);
-    outb(0xa1, 0xff);
+    outb(0x21, 0b11111101);
+    outb(0xa1, 0b11111111);
     lidt(idt_desc);
     asm("sti");
 }
@@ -52,7 +54,7 @@ extern "C" void isr1_handler() {
 
 __attribute__((interrupt)) void pagef_handler(interrupt_frame_t* int_frame) {
     asm("cli");
-    printf("A page fault has occured\n\rFault address: %h\n\rPML4: %h\n\rRIP: %h\n\rReadable Message: ", read_cr2(), read_cr3(),int_frame->rip);
+    printf("A page fault has occured\n\rFault address: %h\n\rPML4: %h\n\rRIP: %h\n\r%t\n\rReadable Message: ", read_cr2(), read_cr3(),int_frame->rip);
     uint64_t err = int_frame->err_code;
     if (err & 0x4) print("User");
     else print("Kernel");
@@ -64,15 +66,27 @@ __attribute__((interrupt)) void pagef_handler(interrupt_frame_t* int_frame) {
     else print("not present");
     if (err & (1<<4)) print(" during an instruction fetch");
     print("\n\r");
-    if (g_PTM) {
-        g_PTM->map((void*)read_cr2(),request_page());
-        asm("sti");
-    } else for (;;);
+    for (;;);
+    write_serial("Pulsing Reset line.\n\r",21);
+    uint8_t temp;
+    do
+    {
+        temp = inb(0x64);
+        if (((temp) & (1)) != 0)
+            inb(0x60);
+    } while (((temp) & (1<<1)) != 0);
+    outb(0x64,0xFE);
 }
 
 __attribute__((interrupt)) void doublef_handler(interrupt_frame_t* int_frame) {
     asm("cli");
     print("A double fault has occured");
+    for (;;);
+}
+
+__attribute__((interrupt)) void ssf_handler(interrupt_frame_t* int_frame) {
+    asm("cli");
+    print("A stack-segment fault has occured!");
     for (;;);
 }
 

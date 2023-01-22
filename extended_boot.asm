@@ -150,7 +150,7 @@ A20ns:
 detect_memory:
     mov ax, 0
     mov es, ax
-    mov di, 0x6000
+    mov di, 0x7000
     mov edx, 0x534d4150
     xor ebx, ebx
 .repeat:
@@ -319,25 +319,32 @@ detect_lmode:
     call print_pm
     jmp $
 
-page_table_entry equ 0x2000
+[extern _end_all]
+page_table_entry equ _end_all
 
 setup_identity_paging:
     mov edi, page_table_entry
     mov cr3, edi
-    mov dword [edi], 0x3007
+    mov dword [edi], _end_all + 0x1007
     add edi, 0x1000
-    mov dword [edi], 0x4007
+    mov dword [edi], _end_all + 0x2007
     add edi, 0x1000
-    mov dword [edi], 0x5007
+    mov dword [edi], _end_all + 0x3007
+    add edi, 8
+    mov dword [edi], _end_all + 0x4007
+    add edi, 8
+    mov dword [edi], _end_all + 0x5007
+    add edi, 8
+    mov dword [edi], _end_all + 0x6007
+    sub edi, 24
     add edi, 0x1000
     mov ebx, 0x00000007
-    mov ecx, 512
+    mov ecx, 2048
     .set_entry:
         mov dword [edi], ebx
         add ebx, 0x1000
         add edi, 8
         loop .set_entry
-        
     mov si, msg_made_pt
     call print_pm
     mov eax, cr4
@@ -365,9 +372,10 @@ msg_pm: db "Entered PMode", 0
 [bits 64]
 %include "idt.asm"
 [extern main]
+[extern _stack]
 [global start_lm]
 start_lm:
-    mov rbp, 0x8000
+    mov rbp, _stack
     mov rsp, rbp
 
     mov edi, 0xb8000
