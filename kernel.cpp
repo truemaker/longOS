@@ -135,8 +135,11 @@ extern "C" void main() {
     print("\n\r");
     ACPI::detect_hardware();
     ACPI::enable_acpi();
-    uint64_t time = PIT::millis_since_boot;
-    printf("Time since boot: %x:%x:%x.%x",((time / 1000)/60)/60,((time / 1000)/60)%60,(time / 1000)%60,time % 1000);
+    while (1) {
+        uint64_t time = PIT::millis_since_boot;
+        printf("Time since boot: %x:%x:%x.%x           \r",((time / 1000)/60)/60,((time / 1000)/60)%60,(time / 1000)%60,time % 1000);
+        PIT::sleep(10);
+    }
     //ACPI::shutdown();
 
     //print_segments();
