@@ -238,4 +238,56 @@ namespace ACPI {
             print("ACPI already enabled\n\r");
         }
     }
+
+    bool is_hardware_table(sdt_header_t* header) {
+        return memcmp(header->signature,"APIC",4) || memcmp(header->signature,"HPET",4);
+    }
+
+    void print_apic_table(sdt_header_t* header) {
+        print("Found APIC table:\n\r");
+        uint32_t loacal_apic_addr = *(uint32_t*)((uint64_t)header + 36 + 0);
+        uint32_t flags = *(uint32_t*)((uint64_t)header + 36 + 4);
+        printf("    Local APIC: %h\n\r    Legacy Dual PICs installed: %s\n\r    Mask all PIC Interrupts: %s\n\r    Entries:\n\r",loacal_apic_addr,(flags & 2)?"Yes":"No",(flags & 1)?"Yes":"No");
+        uint64_t remaining = (header->length - 44);
+        uint8_t* entry = (uint8_t*)((uint64_t)header + 44);
+        while (remaining > 0) {
+            print("        ");
+            switch (entry[0]) {
+                case 0: printf("Processor Local APIC                    : CPU %x APIC %x",entry[2],entry[3]); break;
+                case 1: printf("I/O APIC                                : ID %x",entry[2]); break;
+                case 2: printf("IO/APIC Source Override                 : BUS %x IRQ %x GSI %h",entry[2],entry[3],*(uint64_t*)&entry[4]); break;
+                case 3: printf("IO/APIC Non-maskable interrupt source"); break;
+                case 4: printf("Local APIC Non-maskable Interrupts      : CPU %x", entry[2]); break;
+                case 5: printf("Local APIC Address Override"); break;
+                case 9: printf("Processor Local x2APIC"); break;
+            }
+            print("\n\r");
+            //printf("        Entry Type: %x\n\r        Length: %x\n\r",entry[0],entry[1]);
+            remaining -= entry[1];
+            entry += entry[1];
+        }
+    }
+    
+    void print_hpet_table(sdt_header_t* header) {
+        print("Found APIC table:\n\r");
+        printf("    HPET Number: %x\n\r", *(uint8_t*)((uint64_t)header + 36 + 16));
+    }
+
+    void print_hardware_table(sdt_header_t* header) {
+        if (memcmp(header->signature,"APIC",4)) print_apic_table(header);
+        if (memcmp(header->signature,"HPET",4)) print_hpet_table(header);
+    }
+
+    void detect_hardware() {
+        sdt_header_t* header = sdt;
+        uint64_t entry_size = extended ? 8 : 4;
+        uint64_t entries = header->length - 36;
+        for (uint64_t i = 0; i < entries; i++) {
+            uint64_t new_addr = *(uint64_t*)((uint64_t)header + sizeof(sdt_header_t) + i*entry_size);
+            if (entry_size == 4) new_addr = (new_addr & 0xffffffff);
+            sdt_header_t* new_table = (sdt_header_t*)new_addr;
+            if (!validate_sdt(new_table)) { print("Invalid SDT."); asm("cli"); for(;;); }
+            if (is_hardware_table(new_table)) print_hardware_table(new_table);
+        }
+    }
 }

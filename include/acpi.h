@@ -128,4 +128,5 @@ namespace ACPI {
     void print_address(acpi_address_t);
     void shutdown();
     void enable_acpi();
+    void detect_hardware();
 }

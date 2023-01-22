@@ -133,8 +133,9 @@ extern "C" void main() {
             print("Unknown");
     }
     print("\n\r");
-    ACPI::enable_acpi();
-    ACPI::shutdown();
+    ACPI::detect_hardware();
+    //ACPI::enable_acpi();
+    //ACPI::shutdown();
 
     print_segments();
     //init_disk();
