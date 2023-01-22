@@ -11,8 +11,8 @@ void pic_remap() {
     a2 = inb(0xA1);
     outb(0x20, 0x11);
     outb(0xA0, 0x11);
-    outb(0x21, 0);
-    outb(0xa1, 8);
+    outb(0x21, 32);
+    outb(0xa1, 40);
     outb(0x21, 4);
     outb(0xa1, 2);
     outb(0x21, 1);
@@ -32,7 +32,7 @@ void register_interrupt(uint64_t id, uint64_t addr) {
 }
 
 void init_idt() {
-    register_interrupt(1, (uint64_t)&isr1);
+    register_interrupt(33, (uint64_t)&isr1);
     register_interrupt(0xe, (uint64_t)&pagef_handler);
     register_interrupt(0x8, (uint64_t)&doublef_handler);
     register_interrupt(0xd, (uint64_t)&gpf_handler);

@@ -253,11 +253,11 @@ namespace ACPI {
         while (remaining > 0) {
             print("        ");
             switch (entry[0]) {
-                case 0: printf("Processor Local APIC                    : CPU %x APIC %x",entry[2],entry[3]); break;
-                case 1: printf("I/O APIC                                : ID %x",entry[2]); break;
-                case 2: printf("IO/APIC Source Override                 : BUS %x IRQ %x GSI %h",entry[2],entry[3],*(uint64_t*)&entry[4]); break;
+                case 0: printf("Processor Local APIC                : CPU %x APIC %x",entry[2],entry[3]); break;
+                case 1: printf("I/O APIC                            : ID %x",entry[2]); break;
+                case 2: printf("IO/APIC Source Override             : BUS %x IRQ %x GSI %h",entry[2],entry[3],*(uint64_t*)&entry[4]); break;
                 case 3: printf("IO/APIC Non-maskable interrupt source"); break;
-                case 4: printf("Local APIC Non-maskable Interrupts      : CPU %x", entry[2]); break;
+                case 4: printf("Local APIC Non-maskable Interrupts  : CPU %x", entry[2]); break;
                 case 5: printf("Local APIC Address Override"); break;
                 case 9: printf("Processor Local x2APIC"); break;
             }
@@ -269,7 +269,7 @@ namespace ACPI {
     }
     
     void print_hpet_table(sdt_header_t* header) {
-        print("Found APIC table:\n\r");
+        print("Found HPET table:\n\r");
         printf("    HPET Number: %x\n\r", *(uint8_t*)((uint64_t)header + 36 + 16));
     }
 
@@ -281,7 +281,7 @@ namespace ACPI {
     void detect_hardware() {
         sdt_header_t* header = sdt;
         uint64_t entry_size = extended ? 8 : 4;
-        uint64_t entries = header->length - 36;
+        uint64_t entries = (header->length - 36)/entry_size;
         for (uint64_t i = 0; i < entries; i++) {
             uint64_t new_addr = *(uint64_t*)((uint64_t)header + sizeof(sdt_header_t) + i*entry_size);
             if (entry_size == 4) new_addr = (new_addr & 0xffffffff);
