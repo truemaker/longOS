@@ -17,25 +17,25 @@
 ptm_t* g_PTM = NULL;
 
 bool test_heap() {
-    void* a = malloc(0x100);
+    void* a = heap::malloc(0x100);
     uint64_t aaddr = (uint64_t)a;
-    void* b = malloc(0x100);
+    void* b = heap::malloc(0x100);
     uint64_t baddr = (uint64_t)b;
-    void* c = malloc(0x100);
-    void* d = malloc(0x100);
+    void* c = heap::malloc(0x100);
+    void* d = heap::malloc(0x100);
     debugf("A: %h\n\rB: %h\n\rC: %h\n\rD: %h\n\r",a,b,c,d);
-    free(b);
-    void* e = malloc(0x100);
+    heap::free(b);
+    void* e = heap::malloc(0x100);
     uint64_t eaddr = (uint64_t)e;
     debugf("E: %h\n\r",e);
-    free(a);
-    free(e);
-    void* f = malloc(0x200);
+    heap::free(a);
+    heap::free(e);
+    void* f = heap::malloc(0x200);
     uint64_t faddr = (uint64_t)f;
     debugf("F: %h\n\r",f);
-    free(c);
-    free(d);
-    free(f);
+    heap::free(c);
+    heap::free(d);
+    heap::free(f);
     return (eaddr==baddr) && (aaddr==faddr);
 }
 
@@ -86,24 +86,24 @@ void init_disk() {
     init_disk(&dev3);
     print_device(&dev3);
 
-    uint16_t *buffer = (uint16_t*)malloc(2*256);
+    uint16_t *buffer = (uint16_t*)heap::malloc(2*256);
     read_disk(&dev0,(uint8_t*)buffer,0,1);
     mbr_t* mbr = (mbr_t*)(&buffer[0xDB]);
 
-    cfs_t cfs = cfs_t(mbr->partition0,&dev0, g_PTM);
+    CFS::cfs_t cfs = CFS::cfs_t(mbr->partition0,&dev0, g_PTM);
     //cfs.list_files();
-    write_serial("Disk there is\n\r",15);
+    serial::write_serial("Disk there is\n\r",15);
     //free(parse_font((uint8_t*)(cfs.read_file(1))));
-    free(buffer);
+    heap::free(buffer);
 }
 
 extern "C" void main() {
     set_cursor_pos(coord_from_pos(0,0));
-    if (init_serial()) {
+    if (serial::init_serial()) {
         printf("Failed to init serial");
         return;
     }
-    write_serial("Just passing by.\n\r",18);
+    serial::write_serial("Just passing by.\n\r",18);
     printf("Welcome to %s %s\n\r","longOS","dev snapshot");
     asm("cli");
     init_idt();
@@ -115,7 +115,7 @@ extern "C" void main() {
 
     g_PTM = &init_paging();
     ACPI::init_acpi();
-    init_heap((void*)0x0000100000000000,0x10);
+    heap::init_heap((void*)0x0000100000000000,0x10);
 
     if (!test_heap()) {
         print("HEAP: Test failed!");

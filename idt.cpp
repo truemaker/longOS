@@ -67,7 +67,7 @@ __attribute__((interrupt)) void pagef_handler(interrupt_frame_t* int_frame) {
     if (err & (1<<4)) print(" during an instruction fetch");
     print("\n\r");
     for (;;);
-    write_serial("Pulsing Reset line.\n\r",21);
+    serial::write_serial("Pulsing Reset line.\n\r",21);
     uint8_t temp;
     do
     {
