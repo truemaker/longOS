@@ -1,6 +1,7 @@
 TARGET=x86_64
 ARGS=-Iinclude -ffreestanding -nostdlib -mno-red-zone -Wno-write-strings -fpermissive
 ARGS64=$(ARGS) -m64 -c
+EMUARGS=-m 256M image.img -usb
 GPP=/usr/local/$(TARGET)elfgcc/bin/$(TARGET)-elf-g++
 LD=/usr/local/$(TARGET)elfgcc/bin/$(TARGET)-elf-ld
 all:
@@ -34,11 +35,14 @@ build:
 	dd if=OS.bin of=image.img conv=notrunc
 	dd if=font.bin of=image.img conv=notrunc seek=409600
 run: build
-	qemu-system-$(TARGET) -m 256M image.img -serial stdio
+	qemu-system-$(TARGET) $(EMUARGS) -serial stdio
 debug: build
-	qemu-system-$(TARGET) -m 256M image.img -serial file:log.log -no-reboot
+	qemu-system-$(TARGET) $(EMUARGS) -serial file:log.log -no-reboot
 	make clean
-#kvm-spice -m 256M OS.bin
+
+kvm: build
+	kvm-spice $(EMUARGS) -serial stdio
+	make clean
 
 clean:
 	rm -rf *.o *.bin *.img
