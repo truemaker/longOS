@@ -13,6 +13,7 @@
 #include <acpi.h>
 #include <timer.h>
 #include <asm.h>
+#include <pci.h>
 
 ptm_t* g_PTM = NULL;
 
@@ -111,7 +112,6 @@ extern "C" void main() {
     
     convert_mmap_to_bmp();
     print_memory();
-    //for (;;);
 
     g_PTM = &init_paging();
     ACPI::init_acpi();
@@ -135,6 +135,7 @@ extern "C" void main() {
     print("\n\r");
     ACPI::detect_hardware();
     ACPI::enable_acpi();
+    PCI::print_pci();
     while (1) {
         uint64_t time = PIT::millis_since_boot;
         printf("Time since boot: %x:%x:%x.%x           \r",((time / 1000)/60)/60,((time / 1000)/60)%60,(time / 1000)%60,time % 1000);

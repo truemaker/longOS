@@ -47,7 +47,7 @@ void init_idt() {
 
 extern "C" void isr1_handler() {
     uint8_t c = inb(0x60);
-    print("Interrupt\n\r");
+    //print("Interrupt\n\r");
     outb(0x20,0x20);
     outb(0xa0, 0x20);
 }

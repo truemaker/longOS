@@ -20,6 +20,7 @@ INPUT (
     font.o
     acpi.o
     timer.o
+    pci.o
 )
 
 OUTPUT (
