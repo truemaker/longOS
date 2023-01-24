@@ -119,7 +119,26 @@ namespace PCI {
         }
     }
     
-    void print_device_type(uint8_t dclass, uint8_t dsubclass) {
+    char* ide_prog_if[] {
+        "ISA Compatibillity mode-only",
+        "PCI native mode-only",
+        "ISA Compatibillity mode (support PCI native mode)",
+        "PCI native mode (support ISA Compatibillity mode)"
+    };
+
+    char* network_controller[] {
+        "Ethernet",
+        "Token Ring",
+        "FDDI",
+        "ATM",
+        "ISDN",
+        "WorldFlip",
+        "PICMG 2.14 Multi Computing",
+        "InfiniBand",
+        "Fabric"
+    };
+
+    void print_device_type(uint8_t dclass, uint8_t dsubclass, uint8_t prog_if) {
         switch (dclass) {
             case 0x6: // Bridge
                 switch (dsubclass) {
@@ -138,19 +157,24 @@ namespace PCI {
                     default:print("Bridge");
                 }
                 break;
-            case 0x3:
+            case 0x3: // Display
                 switch (dsubclass) {
-                    case 0x0:print("VGA-Compatible Display Controller");break;
+                    case 0x0:
+                        switch (prog_if) {
+                            case 0x00:print("VGA");break;
+                            case 0x01:print("8514-Compatible");break;
+                        }
+                        print(" Display Controller");break;
                     case 0x1:print("XGA Display Controller");break;
                     case 0x2:print("3D Display Controller");break;
                     case 0x80:print("Other Display Controller");break;
                     default:print("Display Controller");
                 }
                 break;
-            case 0x1:
+            case 0x1: // Mass Storage
                 switch (dsubclass) {
                     case 0x0:print("SCSI Bus Controller");break;
-                    case 0x1:print("IDE Controller");break;
+                    case 0x1:printf("IDE Controller (%s) %s",ide_prog_if[(prog_if&0x7f)/5],prog_if & 0x80 ? "supports bus mastering" : "");break;
                     case 0x2:print("Floppy Disk Controller");break;
                     case 0x3:print("IPI Bus Controller");break;
                     case 0x4:print("RAID Controller");break;
@@ -162,12 +186,21 @@ namespace PCI {
                     default:print("Display Controller");
                 }
                 break;
-            case 0xC:
+            case 0xC: // Serial
                 switch (dsubclass) {
                     case 0x0: print("FireWire Controller"); break;
                     case 0x1: print("Access Bus Controller"); break;
                     case 0x2: print("SSA"); break;
-                    case 0x3: print("USB Controller"); break;
+                    case 0x3: print("USB Controller ");
+                        switch (prog_if) {
+                            case 0x00: print("(UHCI)"); break;
+                            case 0x10: print("(OHCI)"); break;
+                            case 0x20: print("(2.0)"); break;
+                            case 0x30: print("(3.0)"); break;
+                            case 0x80: print("(Unspecified)"); break;
+                            case 0xFE: print("(Device)"); break;
+                        }
+                        break;
                     case 0x4: print("Fibre Channel"); break;
                     case 0x5: print("SMBus Controller"); break;
                     case 0x6: print("InfiniBand Controller"); break;
@@ -176,6 +209,11 @@ namespace PCI {
                     case 0x9: print("CANbus Controller"); break;
                     case 0x80: print("Other Serial Bus Controller"); break;
                 }
+                break;
+            case 0x2: // Network
+                if (dsubclass == 0x80) print("Other");
+                else print(network_controller[dsubclass]);
+                print(" Network Controller");
                 break;
             default:
                 print(device_class_names[dclass]);
@@ -193,7 +231,8 @@ namespace PCI {
         uint16_t dclass_specification = read_config_word(bus,device,func,0x8);
         uint8_t dclass = dclass_specification >> 8;
         uint8_t dsubclass = dclass_specification & 0xFF;
-        print_device_type(dclass,dsubclass);
+        uint8_t prog_if = (read_config_word(bus,device,func,0xa) & 0xff00) >> 8;
+        print_device_type(dclass,dsubclass,prog_if);
         //print(device_class_names[dclass]);
         print("\n\r");
     }
