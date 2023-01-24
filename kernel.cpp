@@ -105,6 +105,7 @@ extern "C" void main() {
         return;
     }
     serial::write_serial("Just passing by.\n\r",18);
+    init_vga();
     printf("Welcome to %s %s\n\r","longOS","dev snapshot");
     asm("cli");
     init_idt();

@@ -6,8 +6,124 @@
 #include <memory.h>
 #include <defines.h>
 #include <serial.h>
+#include "vga_font.cpp"
 
 uint16_t vga_pos = 0;
+
+unsigned char g_90x30_text[] {
+/* MISC */
+	0xE7,
+/* SEQ */
+	0x03, 0x01, 0x03, 0x00, 0x02,
+/* CRTC */
+	0x6B, 0x59, 0x5A, 0x82, 0x60, 0x8D, 0x0B, 0x3E,
+	0x00, 0x4F, 0x0D, 0x0E, 0x00, 0x00, 0x00, 0x00,
+	0xEA, 0x0C, 0xDF, 0x2D, 0x10, 0xE8, 0x05, 0xA3,
+	0xFF,
+/* GC */
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x10, 0x0E, 0x00,
+	0xFF,
+/* AC */
+	0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x14, 0x07,
+	0x38, 0x39, 0x3A, 0x3B, 0x3C, 0x3D, 0x3E, 0x3F,
+	0x0C, 0x00, 0x0F, 0x08, 0x00,
+};
+
+
+unsigned char g_90x60_text[] =
+{
+/* MISC */
+	0xE7,
+/* SEQ */
+	0x03, 0x01, 0x03, 0x00, 0x02,
+/* CRTC */
+	0x6B, 0x59, 0x5A, 0x82, 0x60, 0x8D, 0x0B, 0x3E,
+	0x00, 0x47, 0x06, 0x07, 0x00, 0x00, 0x00, 0x00,
+	0xEA, 0x0C, 0xDF, 0x2D, 0x08, 0xE8, 0x05, 0xA3,
+	0xFF,
+/* GC */
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x10, 0x0E, 0x00,
+	0xFF,
+/* AC */
+	0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x14, 0x07,
+	0x38, 0x39, 0x3A, 0x3B, 0x3C, 0x3D, 0x3E, 0x3F,
+	0x0C, 0x00, 0x0F, 0x08, 0x00,
+};
+
+unsigned char g_320x200x256[] =
+{
+/* MISC */
+	0x63,
+/* SEQ */
+	0x03, 0x01, 0x0F, 0x00, 0x0E,
+/* CRTC */
+	0x5F, 0x4F, 0x50, 0x82, 0x54, 0x80, 0xBF, 0x1F,
+	0x00, 0x41, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+	0x9C, 0x0E, 0x8F, 0x28,	0x40, 0x96, 0xB9, 0xA3,
+	0xFF,
+/* GC */
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x40, 0x05, 0x0F,
+	0xFF,
+/* AC */
+	0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
+	0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F,
+	0x41, 0x00, 0x0F, 0x00,	0x00
+};
+
+void gclear() {
+    memset(VGA_MEM,1,320*200);
+    set_cursor_pos(0);
+}
+
+void init_vga() {
+    unsigned i;
+    uint8_t* regs = g_90x30_text;
+/* write MISCELLANEOUS reg */
+	outb(GRAPHICS_MISC_WRITE, *regs);
+	regs++;
+/* write SEQUENCER regs */
+	for(i = 0; i < 5; i++)
+	{
+		outb(GRAPHICS_SEQ_INDEX, i);
+		outb(GRAPHICS_SEQ_DATA, *regs);
+		regs++;
+	}
+/* unlock CRTC registers */
+	outb(GRAPHICS_CRTC_INDEX, 0x03);
+	outb(GRAPHICS_CRTC_DATA, inb(GRAPHICS_CRTC_DATA) | 0x80);
+	outb(GRAPHICS_CRTC_INDEX, 0x11);
+	outb(GRAPHICS_CRTC_DATA, inb(GRAPHICS_CRTC_DATA) & ~0x80);
+/* make sure they remain unlocked */
+	regs[0x03] |= 0x80;
+	regs[0x11] &= ~0x80;
+/* write CRTC regs */
+	for(i = 0; i < 25; i++)
+	{
+		outb(GRAPHICS_CRTC_INDEX, i);
+		outb(GRAPHICS_CRTC_DATA, *regs);
+		regs++;
+	}
+/* write GRAPHICS CONTROLLER regs */
+	for(i = 0; i < 9; i++)
+	{
+		outb(GRAPHICS_GC_INDEX, i);
+		outb(GRAPHICS_GC_DATA, *regs);
+		regs++;
+	}
+/* write ATTRIBUTE CONTROLLER regs */
+	for(i = 0; i < 20; i++)
+	{
+		(void)inb(GRAPHICS_INSTAT_READ);
+		outb(GRAPHICS_AC_INDEX, i);
+		outb(GRAPHICS_AC_WRITE, *regs);
+		regs++;
+	}
+/* lock 16-color palette and unblank display */
+	(void)inb(GRAPHICS_INSTAT_READ);
+	outb(GRAPHICS_AC_INDEX, 0x20);
+    write_font(g_8x16_font,16);
+    clear();
+}
 
 void clear_down_row() {
     memset(VGA_MEM+VGA_WIDTH*(VGA_HEIGHT-1)*2,attribute(FG_WHITE,BG_BLUE),VGA_WIDTH*2);
@@ -17,10 +133,10 @@ void clear_down_row() {
 }
 
 void set_cursor_pos(uint16_t pos) {
-    outb(0x3D4,0x0f);
-    outb(0x3D5,(unsigned char)(pos&0xff));
-    outb(0x3D4,0x0e);
-    outb(0x3D5,(unsigned char)((pos>>8) & 0xff));
+    outb(GRAPHICS_CRTC_INDEX,0x0f);
+    outb(GRAPHICS_CRTC_DATA,(unsigned char)(pos&0xff));
+    outb(GRAPHICS_CRTC_INDEX,0x0e);
+    outb(GRAPHICS_CRTC_DATA,(unsigned char)((pos>>8) & 0xff));
     vga_pos = pos;
     if (vga_pos > VGA_WIDTH * VGA_HEIGHT) {
         memcpy(VGA_MEM,VGA_MEM + VGA_WIDTH*2,VGA_WIDTH*(VGA_HEIGHT-1)*2);
@@ -41,6 +157,33 @@ void print(const char *str) {
         cPtr++;
     }
     set_cursor_pos(vga_pos);
+}
+
+static void write_pixel8(unsigned x, unsigned y, unsigned c)
+{
+	unsigned wd_in_bytes;
+	unsigned off;
+
+	wd_in_bytes = 320;
+	off = wd_in_bytes * y + x;
+	*(uint8_t*)((uint64_t)VGA_MEM+off) = c;
+}
+
+void gprintc(char c) {
+    uint64_t index_font = (8*c);
+    uint64_t x = (vga_pos%VGA_WIDTH)*8;
+    uint64_t y = (vga_pos/VGA_WIDTH)*8;
+    for (uint64_t i = 0; i < 8; i++) {
+        for (uint64_t j = 0; j < 8; j++) {
+            if ((g_8x8_font[index_font]) & (0x80 >> j)) {
+                write_pixel8(x+j,y,0x1f);//*(uint8_t*)((uint64_t)VGA_MEM+(y*320+(x+j))) = 0xff;
+            } else {
+                write_pixel8(x+j,y,1);
+            }
+        }
+        index_font++;
+        y += 1;
+    }
 }
 
 void printc(char c) {

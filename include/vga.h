@@ -1,8 +1,43 @@
 #pragma once
 #include <typedef.h>
 #define VGA_MEM (uint8_t*)0xb8000
-#define VGA_WIDTH 80
-#define VGA_HEIGHT 25
+#define VGA_WIDTH 90
+//40
+//80
+#define VGA_HEIGHT 30
+//25
+//25
+
+/* Attribute Controller Registers */
+#define	GRAPHICS_AC_INDEX 0x3C0
+#define	GRAPHICS_AC_READ 0x3C1
+#define	GRAPHICS_AC_WRITE 0x3C0
+
+/*
+Miscellaneous Output
+*/
+#define	GRAPHICS_MISC_READ 0x3CC
+#define	GRAPHICS_MISC_WRITE 0x3C2
+
+/* Sequencer Registers */
+#define GRAPHICS_SEQ_INDEX 0x3C4
+#define GRAPHICS_SEQ_DATA 0x3C5
+
+/* GRAPHICS Color Palette Registers */
+#define	GRAPHICS_DAC_READ_INDEX 0x3C7
+#define	GRAPHICS_DAC_WRITE_INDEX 0x3C8
+#define	GRAPHICS_DAC_DATA 0x3C9
+
+/* Graphics Controller Registers */
+#define GRAPHICS_GC_INDEX 0x3CE
+#define GRAPHICS_GC_DATA 0x3CF
+
+/* CRT Controller Registers */
+#define GRAPHICS_CRTC_INDEX 0x3D4
+#define GRAPHICS_CRTC_DATA 0x3D5
+
+/* General Control and Status Registers */
+#define	GRAPHICS_INSTAT_READ 0x3DA
 
 enum foreground_color {
     FG_BLACK           = 0x00,
@@ -54,3 +89,4 @@ void print_hex(uint8_t byte);
 void print_hex(uint16_t word);
 void print_hex(uint32_t dword);
 void print_hex(uint64_t quad);
+void init_vga();
