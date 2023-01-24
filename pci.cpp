@@ -215,6 +215,15 @@ namespace PCI {
                 else print(network_controller[dsubclass]);
                 print(" Network Controller");
                 break;
+            case 0x4:
+                switch (dsubclass) {
+                    case 0x00: print("Multimedia Video Controller"); break;
+                    case 0x01: print("Multimedia Audio Controller"); break;
+                    case 0x02: print("Computer Telephony Device"); break;
+                    case 0x03: print("Audio Device"); break;
+                    default: print("Other Multimedia Controller");
+                }
+                break;
             default:
                 print(device_class_names[dclass]);
         }
@@ -226,8 +235,8 @@ namespace PCI {
         if (read_config_word(bus,device,func,0x0) == 0xFFFF) return;
         print_vendor(bus,device,func);
         print(" / ");
-        print_device_name(bus,device,func);
-        print(" / ");
+        //print_device_name(bus,device,func);
+        //print(" / ");
         uint16_t dclass_specification = read_config_word(bus,device,func,0x8);
         uint8_t dclass = dclass_specification >> 8;
         uint8_t dsubclass = dclass_specification & 0xFF;

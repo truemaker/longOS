@@ -14,6 +14,7 @@
 #include <timer.h>
 #include <asm.h>
 #include <pci.h>
+#include <sound.h>
 
 ptm_t* g_PTM = NULL;
 
@@ -110,6 +111,7 @@ extern "C" void main() {
     asm("cli");
     init_idt();
     PIT::init_timer();
+    PCSPK::beep();
     
     convert_mmap_to_bmp();
     print_memory();

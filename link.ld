@@ -21,6 +21,7 @@ INPUT (
     acpi.o
     timer.o
     pci.o
+    sound.o
 )
 
 OUTPUT (

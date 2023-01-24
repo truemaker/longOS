@@ -1,7 +1,7 @@
 TARGET=x86_64
 ARGS=-Iinclude -ffreestanding -nostdlib -mno-red-zone -Wno-write-strings -fpermissive
 ARGS64=$(ARGS) -m64 -c
-EMUARGS=-m 256M image.img -device qemu-xhci
+EMUARGS=-m 256M image.img -device qemu-xhci -soundhw pcspk -audiodev alsa,id=speaker
 GPP=/usr/local/$(TARGET)elfgcc/bin/$(TARGET)-elf-g++
 LD=/usr/local/$(TARGET)elfgcc/bin/$(TARGET)-elf-ld
 all:
@@ -30,6 +30,7 @@ build:
 	$(GPP) $(ARGS64) "acpi.cpp" -o "acpi.o"
 	$(GPP) $(ARGS64) "timer.cpp" -o "timer.o"
 	$(GPP) $(ARGS64) "pci.cpp" -o "pci.o"
+	$(GPP) $(ARGS64) "sound.cpp" -o "sound.o"
 	$(LD) -T "link.ld" -Map memory.map
 	cat mbr.bin boot.bin kernel.bin > OS.bin
 	dd if=/dev/zero of=image.img bs=512 count=2880
