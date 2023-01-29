@@ -1,10 +1,10 @@
 #pragma once
 #include <typedef.h>
 #define VGA_MEM (uint8_t*)0xb8000
-#define VGA_WIDTH 90
+#define VGA_WIDTH w
 //40
 //80
-#define VGA_HEIGHT 30
+#define VGA_HEIGHT h
 //25
 //25
 
@@ -77,6 +77,8 @@ enum background_color {
     BG_WHITE           = 0xf0
 };
 
+extern uint64_t w,h;
+
 void set_cursor_pos(uint16_t pos);
 uint16_t coord_from_pos(uint16_t x, uint16_t y);
 void print(const char *str);
@@ -90,4 +92,6 @@ void print_hex(uint16_t word);
 void print_hex(uint32_t dword);
 void print_hex(uint64_t quad);
 void init_vga();
+void set_mode(uint64_t w, uint64_t h);
 void print_trans();
+void set_line_color(uint64_t line, uint8_t c);

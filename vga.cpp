@@ -10,6 +10,28 @@
 #include "vga_font.cpp"
 
 uint16_t vga_pos = 0;
+uint64_t w = 0;
+uint64_t h = 0;
+
+unsigned char g_80x25_text[] =
+{
+/* MISC */
+	0x67,
+/* SEQ */
+	0x03, 0x00, 0x03, 0x00, 0x02,
+/* CRTC */
+	0x5F, 0x4F, 0x50, 0x82, 0x55, 0x81, 0xBF, 0x1F,
+	0x00, 0x4F, 0x0D, 0x0E, 0x00, 0x00, 0x00, 0x50,
+	0x9C, 0x0E, 0x8F, 0x28, 0x1F, 0x96, 0xB9, 0xA3,
+	0xFF,
+/* GC */
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x10, 0x0E, 0x00,
+	0xFF,
+/* AC */
+	0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x14, 0x07,
+	0x38, 0x39, 0x3A, 0x3B, 0x3C, 0x3D, 0x3E, 0x3F,
+	0x0C, 0x00, 0x0F, 0x08, 0x00
+};
 
 unsigned char g_90x30_text[] {
 /* MISC */
@@ -86,9 +108,8 @@ void gclear(uint8_t c=1) {
     set_cursor_pos(0);
 }
 
-void print_trans() {
+void load_registers(uint8_t* regs) {
     unsigned i;
-    uint8_t* regs = g_320x200x256;
 /* write MISCELLANEOUS reg */
 	outb(GRAPHICS_MISC_WRITE, *regs);
 	regs++;
@@ -132,6 +153,10 @@ void print_trans() {
 /* lock 16-color palette and unblank display */
 	(void)inb(GRAPHICS_INSTAT_READ);
 	outb(GRAPHICS_AC_INDEX, 0x20);
+}
+
+void print_trans() {
+    load_registers(g_320x200x256);
     gclear(0);
     uint64_t offset = 135;
     for (uint64_t i = 0; i<200;i++) {
@@ -156,53 +181,26 @@ void print_trans() {
     init_vga();
 }
 
+void set_mode(uint64_t wd, uint64_t ht) {
+    switch (wd) {
+        case 80:
+            switch (ht) {
+                case 25: load_registers(g_80x25_text); write_font(g_8x16_font,16); break;
+                default: load_registers(g_80x25_text); write_font(g_8x16_font,16); w = 80; h = 25; clear(); printf("No mode with height %x.",ht); for (;;);
+            } break;
+        case 90:
+            switch (ht) {
+                case 30: load_registers(g_90x30_text); write_font(g_8x16_font,16); break;
+                case 60: load_registers(g_90x60_text); write_font(g_8x8_font,8); break;
+                default: load_registers(g_80x25_text); write_font(g_8x16_font,16); w = 80; h = 25; clear(); printf("No mode with height %x.",ht); for (;;);
+            } break;
+        default: load_registers(g_80x25_text); write_font(g_8x16_font,16); w = 80; h = 25; clear(); printf("No mode with width %x.",wd); for (;;);
+    }
+    w = wd; h = ht;
+}
+
 void init_vga() {
-    unsigned i;
-    uint8_t* regs = g_90x30_text;
-/* write MISCELLANEOUS reg */
-	outb(GRAPHICS_MISC_WRITE, *regs);
-	regs++;
-/* write SEQUENCER regs */
-	for(i = 0; i < 5; i++)
-	{
-		outb(GRAPHICS_SEQ_INDEX, i);
-		outb(GRAPHICS_SEQ_DATA, *regs);
-		regs++;
-	}
-/* unlock CRTC registers */
-	outb(GRAPHICS_CRTC_INDEX, 0x03);
-	outb(GRAPHICS_CRTC_DATA, inb(GRAPHICS_CRTC_DATA) | 0x80);
-	outb(GRAPHICS_CRTC_INDEX, 0x11);
-	outb(GRAPHICS_CRTC_DATA, inb(GRAPHICS_CRTC_DATA) & ~0x80);
-/* make sure they remain unlocked */
-	regs[0x03] |= 0x80;
-	regs[0x11] &= ~0x80;
-/* write CRTC regs */
-	for(i = 0; i < 25; i++)
-	{
-		outb(GRAPHICS_CRTC_INDEX, i);
-		outb(GRAPHICS_CRTC_DATA, *regs);
-		regs++;
-	}
-/* write GRAPHICS CONTROLLER regs */
-	for(i = 0; i < 9; i++)
-	{
-		outb(GRAPHICS_GC_INDEX, i);
-		outb(GRAPHICS_GC_DATA, *regs);
-		regs++;
-	}
-/* write ATTRIBUTE CONTROLLER regs */
-	for(i = 0; i < 20; i++)
-	{
-		(void)inb(GRAPHICS_INSTAT_READ);
-		outb(GRAPHICS_AC_INDEX, i);
-		outb(GRAPHICS_AC_WRITE, *regs);
-		regs++;
-	}
-/* lock 16-color palette and unblank display */
-	(void)inb(GRAPHICS_INSTAT_READ);
-	outb(GRAPHICS_AC_INDEX, 0x20);
-    write_font(g_8x16_font,16);
+    set_mode(90,30);
     clear();
 }
 
@@ -415,4 +413,10 @@ void print_hex(uint32_t dword) {
 
 void print_hex(uint64_t quad) {
     print(HexToString(quad));
+}
+
+void set_line_color(uint64_t line, uint8_t c) {
+    for (uint16_t i = 0; i < VGA_WIDTH; i++) {
+        *(VGA_MEM+(i+(line*VGA_WIDTH))*2+1) = c;
+    }
 }

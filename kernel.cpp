@@ -15,6 +15,7 @@
 #include <asm.h>
 #include <pci.h>
 #include <sound.h>
+#include <defines.h>
 
 ptm_t* g_PTM = NULL;
 
@@ -99,18 +100,93 @@ void init_disk() {
     heap::free(buffer);
 }
 
+namespace VGASELECT {
+    uint64_t selection;
+    bool ok;
+    bool retry;
+    void move(uint8_t scancode) {
+        switch (scancode) {
+	        case 0x50:
+	        	selection++;
+	        	break;
+	        case 0x48:
+	        	selection--;
+	        	break;
+            case 0x9c:
+                if (ok) retry = true;
+                ok = true;
+                break;
+	        default:
+	        	break;
+	    }
+        if ((long long)selection < 0) selection = 2;
+        selection = selection % 3;
+    }
+
+    void run() {
+        main_keyboard_handler = move;
+        char* mode_names[] = {
+            "80x25 text",
+            "90x30 text",
+            "90x60 text"
+        };
+
+        uint64_t mode_widths[] = {
+            80,
+            90,
+            90
+        };
+
+        uint64_t mode_heights[] = {
+            25,
+            30,
+            60
+        };
+        while (1) {
+            set_mode(80,25);
+            clear();
+            selection = 0;
+            retry = false;
+            ok = false;
+            for (uint64_t i = 0; i < 3; i++) {
+                set_cursor_pos(coord_from_pos(0,i));
+                print(mode_names[i]);
+            }
+            uint64_t sel = selection;
+            while (1) {
+                sel = selection;
+                for (uint64_t i = 0; i < 3; i++) {
+                    set_line_color(i,(sel == i) ? 0xf1 : 0x1f);
+                }
+                if (ok) break;
+            }
+            set_mode(mode_widths[sel],mode_heights[sel]);
+#ifndef VGASELECT_INSTANT_SELECT
+            clear();
+            printf("Selected: %s\n\rPress Enter to revoke within 3 seconds.",mode_names[sel]);
+            PIT::sleep(3000);
+            if (retry) continue;
+#endif
+            main_keyboard_handler = 0;
+            clear();
+            return;
+        }
+    }
+}
+
 extern "C" void main() {
-    set_cursor_pos(coord_from_pos(0,0));
+    init_vga();
+    asm("cli");
+    init_idt();
+    PIT::init_timer();
+    VGASELECT::run();
+
     if (serial::init_serial()) {
         printf("Failed to init serial");
         return;
     }
     serial::write_serial("Just passing by.\n\r",18);
-    init_vga();
     printf("Welcome to %s %s\n\r","longOS","dev snapshot");
-    asm("cli");
-    init_idt();
-    PIT::init_timer();
     PCSPK::beep();
     
     convert_mmap_to_bmp();

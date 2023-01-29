@@ -5,6 +5,9 @@
 #include <memory.h>
 #include <serial.h>
 
+
+void(*main_keyboard_handler)(uint8_t scan_code);
+
 void pic_remap() {
     uint8_t a1,a2;
     a1 = inb(0x21);
@@ -47,7 +50,7 @@ void init_idt() {
 
 extern "C" void isr1_handler() {
     uint8_t c = inb(0x60);
-    //print("Interrupt\n\r");
+    if (main_keyboard_handler) main_keyboard_handler(c);
     outb(0x20,0x20);
     outb(0xa0, 0x20);
 }
