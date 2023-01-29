@@ -105,9 +105,7 @@ namespace VGASELECT {
     void init();
     uint64_t selection;
     uint64_t follow;
-    bool g;
-    bool ok;
-    bool retry;
+    bool g,ok,retry,can_c;
     char* mode_names[] = { "80x25 text", "90x30 text", "90x60 text" };
     uint64_t mode_widths[] = { 80, 90, 90 };
     uint64_t mode_heights[] = { 25, 30, 60 };
@@ -130,14 +128,13 @@ namespace VGASELECT {
                 put_symbol(j,i,0xb1);
             }
         }
-        PIT::sleep(5000);
-        init();
     }
 
     void init() {
         set_mode(80,25);
         clear();
         selection = 0;
+        can_c = true;
         g = false;
         retry = false;
         ok = false;
@@ -164,6 +161,8 @@ namespace VGASELECT {
         }
         put_symbol(39,2,0xcb);
         put_symbol(39,24,0xca);
+        put_string(40,3,"Right Text");
+        set_line_color(3,BG_BLUE | FG_YELLOW,40,50);
         for (uint64_t i = 0; i < 3; i++) {
             set_cursor_pos(coord_from_pos(1,i+3));
             print(mode_names[i]);
@@ -201,8 +200,8 @@ namespace VGASELECT {
             init();
             uint64_t sel = selection;
             while (1) {
-                if (g && follow == 5) { print_trans(); main_keyboard_handler = secret_kh; }
-                if (follow == 5) the_secret();
+                if (g && follow == 5) { can_c = false; print_trans(); main_keyboard_handler = secret_kh; while (!can_c) asm("hlt"); }
+                if (follow == 5) { can_c = false; the_secret(); main_keyboard_handler = secret_kh; while (!can_c) asm("hlt"); }
                 sel = selection;
                 for (uint64_t i = 0; i < 3; i++) {
                     set_line_color(i+3,(sel == i) ? 0xf1 : 0x1f,1,11);
