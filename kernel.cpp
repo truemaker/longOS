@@ -102,22 +102,73 @@ void init_disk() {
 
 namespace VGASELECT {
     void move(uint8_t);
+    void init();
     uint64_t selection;
+    uint64_t follow;
+    bool g;
     bool ok;
     bool retry;
     char* mode_names[] = { "80x25 text", "90x30 text", "90x60 text" };
     uint64_t mode_widths[] = { 80, 90, 90 };
     uint64_t mode_heights[] = { 25, 30, 60 };
+    void put_symbol(uint64_t x, uint64_t y, uint8_t c) {
+        set_cursor_pos(coord_from_pos(x,y));
+        printc(c);
+    }
+
+    void put_string(uint64_t x, uint64_t y, char* s) {
+        set_cursor_pos(coord_from_pos(x,y));
+        print(s);
+    }
+
+    void the_secret() {
+        for (uint64_t i = 0; i < 25; i++) {
+            if ((i / 5)==0 || (i / 5)==4) set_line_color(i,BG_WHITE | FG_LIGHTBLUE, 0, 80);
+            if ((i / 5)==1 || (i / 5)==3) set_line_color(i,BG_WHITE | FG_LIGHTRED, 0, 80);
+            if ((i / 5)==2)               set_line_color(i,BG_WHITE | FG_WHITE, 0, 80);
+            for (uint64_t j = 0; j < 80; j++) {
+                put_symbol(j,i,0xb1);
+            }
+        }
+        PIT::sleep(5000);
+        init();
+    }
+
     void init() {
         set_mode(80,25);
         clear();
         selection = 0;
+        g = false;
         retry = false;
         ok = false;
+        follow = 0;
+        for (uint64_t i = 0; i < 25; i++) {
+            put_symbol(0,i,0xba);
+            put_symbol(79,i,0xba);
+        }
+        for (uint64_t i = 0; i < 80; i++) {
+            put_symbol(i,0,0xcd);
+            put_symbol(i,24,0xcd);
+            put_symbol(i,2,0xcd);
+        }
+        put_string(1,1,"longOS VGA Configuration");
+        set_line_color(1,BG_BLUE | FG_YELLOW,1,25);
+        put_symbol(0,0,0xc9);
+        put_symbol(0,24,0xc8);
+        put_symbol(79,0,0xbb);
+        put_symbol(79,24,0xbc);
+        put_symbol(0,2,0xcc);
+        put_symbol(79,2,0xb9);
+        for (uint64_t i = 3; i < 24; i++) {
+            put_symbol(39,i,0xba);
+        }
+        put_symbol(39,2,0xcb);
+        put_symbol(39,24,0xca);
         for (uint64_t i = 0; i < 3; i++) {
-            set_cursor_pos(coord_from_pos(0,i));
+            set_cursor_pos(coord_from_pos(1,i+3));
             print(mode_names[i]);
         }
+        disable_cursor();
     }
     
     void secret_kh(uint8_t scancode) {
@@ -132,7 +183,12 @@ namespace VGASELECT {
 	        case 0x50: selection++; break;
 	        case 0x48: selection--; break;
             case 0x9c: if (ok) { retry = true; } ok = true; break;
-            case 0x01: print_trans(); main_keyboard_handler = secret_kh; break;
+            case 0x14: if (follow) { follow = 1; g = false; } else { follow++; } break;
+            case 0x13: if (follow != 1) { follow = 0; g = false; } else { follow++; } break;
+            case 0x1e: if (follow != 2) { follow = 0; g = false; } else { follow++; } break;
+            case 0x31: if (follow != 3) { follow = 0; g = false; } else { follow++; } break;
+            case 0x1f: if (follow != 4) { follow = 0; g = false; } else { follow++; } break;
+            case 0x22: g = true; follow = 0; break;
 	        default: break;
 	    }
         if ((long long)selection < 0) selection = 2;
@@ -145,9 +201,11 @@ namespace VGASELECT {
             init();
             uint64_t sel = selection;
             while (1) {
+                if (g && follow == 5) { print_trans(); main_keyboard_handler = secret_kh; }
+                if (follow == 5) the_secret();
                 sel = selection;
                 for (uint64_t i = 0; i < 3; i++) {
-                    set_line_color(i,(sel == i) ? 0xf1 : 0x1f);
+                    set_line_color(i+3,(sel == i) ? 0xf1 : 0x1f,1,11);
                 }
                 if (ok) break;
             }
@@ -166,6 +224,7 @@ namespace VGASELECT {
 #endif
             main_keyboard_handler = 0;
             clear();
+            enable_cursor();
             return;
         }
     }

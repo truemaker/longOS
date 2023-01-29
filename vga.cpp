@@ -413,8 +413,21 @@ void print_hex(uint64_t quad) {
     print(HexToString(quad));
 }
 
-void set_line_color(uint64_t line, uint8_t c) {
-    for (uint16_t i = 0; i < VGA_WIDTH; i++) {
+void set_line_color(uint64_t line, uint8_t c, uint64_t start = 0, uint64_t end = VGA_WIDTH) {
+    for (uint16_t i = start; i < end; i++) {
         *(VGA_MEM+(i+(line*VGA_WIDTH))*2+1) = c;
     }
+}
+
+void enable_cursor() {
+    outb(0x3D4, 0x0A);
+	outb(0x3D5, (inb(0x3D5) & 0xC0) | 0x0D);
+ 
+	outb(0x3D4, 0x0B);
+	outb(0x3D5, (inb(0x3D5) & 0xE0) | 0x0E);
+}
+
+void disable_cursor() {
+    outb(0x3D4, 0x0A);
+	outb(0x3D5, 0x20);
 }

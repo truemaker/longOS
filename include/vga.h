@@ -94,4 +94,6 @@ void print_hex(uint64_t quad);
 void init_vga();
 void set_mode(uint64_t w, uint64_t h);
 void print_trans();
-void set_line_color(uint64_t line, uint8_t c);
+void set_line_color(uint64_t line, uint8_t c, uint64_t start=0, uint64_t end=VGA_WIDTH);
+void disable_cursor();
+void enable_cursor();
