@@ -101,23 +101,13 @@ void init_disk() {
 }
 
 namespace VGASELECT {
+    void move(uint8_t);
     uint64_t selection;
     bool ok;
     bool retry;
     char* mode_names[] = { "80x25 text", "90x30 text", "90x60 text" };
     uint64_t mode_widths[] = { 80, 90, 90 };
     uint64_t mode_heights[] = { 25, 30, 60 };
-    void move(uint8_t scancode) {
-        switch (scancode) {
-	        case 0x50: selection++; break;
-	        case 0x48: selection--; break;
-            case 0x9c: if (ok) { retry = true; } ok = true; break;
-	        default: break;
-	    }
-        if ((long long)selection < 0) selection = 2;
-        selection = selection % 3;
-    }
-
     void init() {
         set_mode(80,25);
         clear();
@@ -128,6 +118,25 @@ namespace VGASELECT {
             set_cursor_pos(coord_from_pos(0,i));
             print(mode_names[i]);
         }
+    }
+    
+    void secret_kh(uint8_t scancode) {
+        switch (scancode) {
+            case 0x81: init(); main_keyboard_handler = move; break;
+            default: break;
+        }
+    }
+
+    void move(uint8_t scancode) {
+        switch (scancode) {
+	        case 0x50: selection++; break;
+	        case 0x48: selection--; break;
+            case 0x9c: if (ok) { retry = true; } ok = true; break;
+            case 0x01: print_trans(); main_keyboard_handler = secret_kh; break;
+	        default: break;
+	    }
+        if ((long long)selection < 0) selection = 2;
+        selection = selection % 3;
     }
 
     void run() {

@@ -177,8 +177,6 @@ void print_trans() {
             write_pixel8(j+offset,i,0x0b);
         }
     }
-    PIT::sleep(10000);
-    init_vga();
 }
 
 void set_mode(uint64_t wd, uint64_t ht) {
