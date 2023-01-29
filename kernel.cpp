@@ -144,10 +144,7 @@ extern "C" void main() {
         printf("Time since boot: %x:%x:%x.%x           \r",((time / 1000)/60)/60,((time / 1000)/60)%60,(time / 1000)%60,time % 1000);
         PIT::sleep(10);
     }
-    //ACPI::shutdown();
-
-    //print_segments();
-    //init_disk();
+    ACPI::shutdown();
 
     while (1) {
         asm("hlt");

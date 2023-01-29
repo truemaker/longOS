@@ -90,3 +90,4 @@ void print_hex(uint16_t word);
 void print_hex(uint32_t dword);
 void print_hex(uint64_t quad);
 void init_vga();
+void print_trans();

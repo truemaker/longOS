@@ -6,6 +6,7 @@
 #include <memory.h>
 #include <defines.h>
 #include <serial.h>
+#include <timer.h>
 #include "vga_font.cpp"
 
 uint16_t vga_pos = 0;
@@ -70,9 +71,89 @@ unsigned char g_320x200x256[] =
 	0x41, 0x00, 0x0F, 0x00,	0x00
 };
 
-void gclear() {
-    memset(VGA_MEM,1,320*200);
+static void write_pixel8(unsigned x, unsigned y, unsigned c)
+{
+	unsigned wd_in_bytes;
+	unsigned off;
+
+	wd_in_bytes = 320;
+	off = wd_in_bytes * y + x;
+	*(uint8_t*)((uint64_t)VGA_MEM-0x18000+off) = c;
+}
+
+void gclear(uint8_t c=1) {
+    memset(VGA_MEM-0x18000,c,320*200);
     set_cursor_pos(0);
+}
+
+void print_trans() {
+    unsigned i;
+    uint8_t* regs = g_320x200x256;
+/* write MISCELLANEOUS reg */
+	outb(GRAPHICS_MISC_WRITE, *regs);
+	regs++;
+/* write SEQUENCER regs */
+	for(i = 0; i < 5; i++)
+	{
+		outb(GRAPHICS_SEQ_INDEX, i);
+		outb(GRAPHICS_SEQ_DATA, *regs);
+		regs++;
+	}
+/* unlock CRTC registers */
+	outb(GRAPHICS_CRTC_INDEX, 0x03);
+	outb(GRAPHICS_CRTC_DATA, inb(GRAPHICS_CRTC_DATA) | 0x80);
+	outb(GRAPHICS_CRTC_INDEX, 0x11);
+	outb(GRAPHICS_CRTC_DATA, inb(GRAPHICS_CRTC_DATA) & ~0x80);
+/* make sure they remain unlocked */
+	regs[0x03] |= 0x80;
+	regs[0x11] &= ~0x80;
+/* write CRTC regs */
+	for(i = 0; i < 25; i++)
+	{
+		outb(GRAPHICS_CRTC_INDEX, i);
+		outb(GRAPHICS_CRTC_DATA, *regs);
+		regs++;
+	}
+/* write GRAPHICS CONTROLLER regs */
+	for(i = 0; i < 9; i++)
+	{
+		outb(GRAPHICS_GC_INDEX, i);
+		outb(GRAPHICS_GC_DATA, *regs);
+		regs++;
+	}
+/* write ATTRIBUTE CONTROLLER regs */
+	for(i = 0; i < 20; i++)
+	{
+		(void)inb(GRAPHICS_INSTAT_READ);
+		outb(GRAPHICS_AC_INDEX, i);
+		outb(GRAPHICS_AC_WRITE, *regs);
+		regs++;
+	}
+/* lock 16-color palette and unblank display */
+	(void)inb(GRAPHICS_INSTAT_READ);
+	outb(GRAPHICS_AC_INDEX, 0x20);
+    gclear(0);
+    uint64_t offset = 135;
+    for (uint64_t i = 0; i<200;i++) {
+        uint64_t j;
+        for (j = 0; j<10;j++) {
+            write_pixel8(j+offset,i,0x0b);
+        }
+        for (; j<20;j++) {
+            write_pixel8(j+offset,i,0x35);
+        }
+        for (; j<30;j++) {
+            write_pixel8(j+offset,i,0x3f);
+        }
+        for (; j<40;j++) {
+            write_pixel8(j+offset,i,0x35);
+        }
+        for (; j<50;j++) {
+            write_pixel8(j+offset,i,0x0b);
+        }
+    }
+    PIT::sleep(10000);
+    init_vga();
 }
 
 void init_vga() {
@@ -157,16 +238,6 @@ void print(const char *str) {
         cPtr++;
     }
     set_cursor_pos(vga_pos);
-}
-
-static void write_pixel8(unsigned x, unsigned y, unsigned c)
-{
-	unsigned wd_in_bytes;
-	unsigned off;
-
-	wd_in_bytes = 320;
-	off = wd_in_bytes * y + x;
-	*(uint8_t*)((uint64_t)VGA_MEM+off) = c;
 }
 
 void gprintc(char c) {

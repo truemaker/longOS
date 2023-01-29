@@ -44,7 +44,7 @@ namespace CFS {
     }
 
     void cfs::print_file(file_entry* file) {
-        uint8_t len = fill_file_name(file->name, fsbuffer);
+        uint8_t len = fill_file_name(file->name, (char*)fsbuffer);
         printf("    %s ",fsbuffer);
         for (uint8_t i = 0; i < (8-len); i++) {
             print(" ");
@@ -76,7 +76,7 @@ namespace CFS {
     }
 
     void cfs::list_files() {
-        fill_volume_name(header.vid,fsbuffer);
+        fill_volume_name(header.vid,(char*)fsbuffer);
         printf("Volume %s contains:\n\r",fsbuffer);
         file_entry_t* file_list = files;
         for (uint64_t i = 0; (i < ((header.root_dir_size * header.sectors_per_block * 512) / 16)); i++) {

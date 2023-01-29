@@ -29,7 +29,7 @@ namespace PCSPK {
     //Make a beep
     void beep() {
     	play_sound(1000);
-    	PIT::sleep(500);
+    	PIT::sleep(20);
     	nosound();
     }
 }

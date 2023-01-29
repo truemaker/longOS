@@ -141,13 +141,13 @@ namespace ACPI {
         RSDP_t *rsdp = (RSDP_t*)0;
         for (uint64_t i=0; i<8192*2; i++) {
             RSDP_t *new_rsdp = (RSDP_t*)(0x80000 + 0x10 * i);
-            if (memcmp(new_rsdp->signature,"RSD PTR ",8)) {
+            if (memcmp(new_rsdp->signature,(void*)"RSD PTR ",8)) {
                 rsdp = new_rsdp;
             }
         }
         for (uint64_t i=0; i<8192*2; i++) {
             RSDP_t *new_rsdp = (RSDP_t*)(0xE0000 + 0x10 * i);
-            if (memcmp(new_rsdp->signature,"RSD PTR ",8)) {
+            if (memcmp(new_rsdp->signature,(void*)"RSD PTR ",8)) {
                 rsdp = new_rsdp;
             }
         }
@@ -157,11 +157,11 @@ namespace ACPI {
     void* get_s5() {
         fadt_t* fadt = (fadt_t*)get_table("FACP");
         sdt_header_t* dsdt = (sdt_header_t*)fadt->dsdt;
-        if (!memcmp(dsdt->signature,"DSDT",4)) { print("Invalid DSDT.\n\r"); asm("cli"); for (;;); }
+        if (!memcmp(dsdt->signature,(void*)"DSDT",4)) { print("Invalid DSDT.\n\r"); asm("cli"); for (;;); }
         char* s5_addr = (char*)((uint64_t)dsdt + 36);
         int dsdt_length = dsdt->length - 36;
         while (0 < dsdt_length--) {
-            if (memcmp(s5_addr,"_S5_",4)) break;
+            if (memcmp(s5_addr,(void*)"_S5_",4)) break;
             s5_addr++;
         }
         if (dsdt_length > 0) {
@@ -240,7 +240,7 @@ namespace ACPI {
     }
 
     bool is_hardware_table(sdt_header_t* header) {
-        return memcmp(header->signature,"APIC",4) || memcmp(header->signature,"HPET",4);
+        return memcmp(header->signature,(void*)"APIC",4) || memcmp(header->signature,(void*)"HPET",4);
     }
 
     void print_apic_table(sdt_header_t* header) {
@@ -254,7 +254,7 @@ namespace ACPI {
             print("        ");
             switch (entry[0]) {
                 case 0: printf("Processor Local APIC                : CPU %x APIC %x",entry[2],entry[3]); break;
-                case 1: printf("I/O APIC                            : ID %x",entry[2]); break;
+                case 1: printf("I/O APIC                            : ID %x ADDR %h",entry[2],*((uint64_t*)&(entry[4]))); break;
                 case 2: printf("IO/APIC Source Override             : BUS %x IRQ %x GSI %h",entry[2],entry[3],*(uint64_t*)&entry[4]); break;
                 case 3: printf("IO/APIC Non-maskable interrupt source"); break;
                 case 4: printf("Local APIC Non-maskable Interrupts  : CPU %x", entry[2]); break;
@@ -274,8 +274,8 @@ namespace ACPI {
     }
 
     void print_hardware_table(sdt_header_t* header) {
-        if (memcmp(header->signature,"APIC",4)) print_apic_table(header);
-        if (memcmp(header->signature,"HPET",4)) print_hpet_table(header);
+        if (memcmp(header->signature,(void*)"APIC",4)) print_apic_table(header);
+        if (memcmp(header->signature,(void*)"HPET",4)) print_hpet_table(header);
     }
 
     void detect_hardware() {
