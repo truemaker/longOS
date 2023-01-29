@@ -104,54 +104,36 @@ namespace VGASELECT {
     uint64_t selection;
     bool ok;
     bool retry;
+    char* mode_names[] = { "80x25 text", "90x30 text", "90x60 text" };
+    uint64_t mode_widths[] = { 80, 90, 90 };
+    uint64_t mode_heights[] = { 25, 30, 60 };
     void move(uint8_t scancode) {
         switch (scancode) {
-	        case 0x50:
-	        	selection++;
-	        	break;
-	        case 0x48:
-	        	selection--;
-	        	break;
-            case 0x9c:
-                if (ok) retry = true;
-                ok = true;
-                break;
-	        default:
-	        	break;
+	        case 0x50: selection++; break;
+	        case 0x48: selection--; break;
+            case 0x9c: if (ok) { retry = true; } ok = true; break;
+	        default: break;
 	    }
         if ((long long)selection < 0) selection = 2;
         selection = selection % 3;
     }
 
+    void init() {
+        set_mode(80,25);
+        clear();
+        selection = 0;
+        retry = false;
+        ok = false;
+        for (uint64_t i = 0; i < 3; i++) {
+            set_cursor_pos(coord_from_pos(0,i));
+            print(mode_names[i]);
+        }
+    }
+
     void run() {
         main_keyboard_handler = move;
-        char* mode_names[] = {
-            "80x25 text",
-            "90x30 text",
-            "90x60 text"
-        };
-
-        uint64_t mode_widths[] = {
-            80,
-            90,
-            90
-        };
-
-        uint64_t mode_heights[] = {
-            25,
-            30,
-            60
-        };
         while (1) {
-            set_mode(80,25);
-            clear();
-            selection = 0;
-            retry = false;
-            ok = false;
-            for (uint64_t i = 0; i < 3; i++) {
-                set_cursor_pos(coord_from_pos(0,i));
-                print(mode_names[i]);
-            }
+            init();
             uint64_t sel = selection;
             while (1) {
                 sel = selection;
@@ -163,8 +145,14 @@ namespace VGASELECT {
             set_mode(mode_widths[sel],mode_heights[sel]);
 #ifndef VGASELECT_INSTANT_SELECT
             clear();
+            
+#ifdef VGASELECT_TIMEOUT_REVOKE
+            printf("Selected: %s\n\rPress Enter to revoke within the next %x second(s).",mode_names[sel],VGASELECT_TIMEOUT_REVOKE/1000);
+            PIT::sleep(VGASELECT_TIMEOUT_REVOKE);
+#else
             printf("Selected: %s\n\rPress Enter to revoke within 3 seconds.",mode_names[sel]);
             PIT::sleep(3000);
+#endif
             if (retry) continue;
 #endif
             main_keyboard_handler = 0;
@@ -179,7 +167,9 @@ extern "C" void main() {
     asm("cli");
     init_idt();
     PIT::init_timer();
+#ifdef RUN_VGASELECT
     VGASELECT::run();
+#endif
 
     if (serial::init_serial()) {
         printf("Failed to init serial");
