@@ -12,7 +12,7 @@
 - ACPI
 - PCI
 - A VGASELECT screen
-- A function that generates a trans flag (unused)
+- A little secret
 - File System
 - MBR
 - PC Speaker
