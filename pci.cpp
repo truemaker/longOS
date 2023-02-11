@@ -87,6 +87,9 @@ namespace PCI {
             case 0x10DE:
                 print("NVIDIA Corporation");
                 break;
+            case 0x1234:
+                print("BOCHS");
+                break;
             default:
                 print("Unknown");//print_hex(vendor);
         }
@@ -97,6 +100,7 @@ namespace PCI {
         uint16_t vendor = read_config_word(bus,device,func,0x2);
         switch (vendor) {
             case 0x8086:
+                print("Intel: ");
                 switch (deviceID) {
                     case 0x29C0:
                         print("Express DRAM Controller");
@@ -109,6 +113,26 @@ namespace PCI {
                         break;
                     case 0x2930:
                         print("SMBus Controller");
+                        break;
+                    default:
+                        print_hex(deviceID);
+                }
+                break;
+            case 0x1234:
+                print("VM: ");
+                switch (deviceID) {
+                    case 0x1111:
+                        print("Video Display");
+                        break;
+                    default:
+                        print_hex(deviceID);
+                }
+                break;
+            case 0x10de:
+                print("VM: ");
+                switch (deviceID) {
+                    case 0x0a20:
+                        print("Video Display");
                         break;
                     default:
                         print_hex(deviceID);
@@ -235,8 +259,6 @@ namespace PCI {
         if (read_config_word(bus,device,func,0x0) == 0xFFFF) return;
         print_vendor(bus,device,func);
         print(" / ");
-        //print_device_name(bus,device,func);
-        //print(" / ");
         uint16_t dclass_specification = read_config_word(bus,device,func,0x8);
         uint8_t dclass = dclass_specification >> 8;
         uint8_t dsubclass = dclass_specification & 0xFF;

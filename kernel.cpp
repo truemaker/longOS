@@ -19,6 +19,7 @@
 #include <gdt.h>
 
 ptm_t* g_PTM = NULL;
+extern uint64_t _stack;
 
 bool test_heap() {
     void* a = heap::malloc(0x100);
