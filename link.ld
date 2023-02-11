@@ -22,6 +22,7 @@ INPUT (
     timer.o
     pci.o
     sound.o
+    gdt.o
 )
 
 OUTPUT (

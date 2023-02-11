@@ -20,10 +20,11 @@ namespace ACPI {
         RSDP_t *rsdp = get_rsdp();
         if (!rsdp) { print("Could not find RSDP"); asm("cli"); for (;;); }
         if (!check_rsdp(rsdp)) { print("Invalid RSDP"); asm("cli"); for (;;); }
-        printf("Revision: %x\n\rChecksum: %x\n\rOEM: %c%c%c%c%c%c\n\r", rsdp->revision, rsdp->checksum, rsdp->oemid[0], rsdp->oemid[1], rsdp->oemid[2], rsdp->oemid[3], rsdp->oemid[4], rsdp->oemid[5]);
+        debugf("Revision: %x\n\rChecksum: %x\n\rOEM: %c%c%c%c%c%c\n\r", rsdp->revision, rsdp->checksum, rsdp->oemid[0], rsdp->oemid[1], rsdp->oemid[2], rsdp->oemid[3], rsdp->oemid[4], rsdp->oemid[5]);
         if (!check_version(rsdp)) {
             print("Loading RSDT...");
             sdt = (sdt_header_t*)rsdp->rsdt;
+            if (!g_PTM->get_present(sdt)) g_PTM->map(sdt,sdt);
             print("Done\n\r");
             if (!validate_sdt(sdt)) { print("Invalid RSDT."); asm("cli"); for(;;); }
             return;

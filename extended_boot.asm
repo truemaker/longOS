@@ -219,7 +219,7 @@ g_nulldesc:
     dd 0
 g_codedesc:
     dw 0xFFFF       ; Limit (low)
-    dw 0x0000       ; Base )low)
+    dw 0x0000       ; Base (low)
     db 0x00         ; Base (mid)
     db 0b10011010   ; Flags
     db 0b11001111   ; Flags + Limit (high)
@@ -231,20 +231,6 @@ g_datadesc:
     db 0b10010010
     db 0b11001111
     db 0x00
-g_codedesc_user:
-    dw 0xFFFF       ; Limit (low)
-    dw 0x0000       ; Base )low)
-    db 0x00         ; Base (mid)
-    db 0b11111010   ; Flags
-    db 0b10101111   ; Flags + Limit (high)
-    db 0x00         ; Base (high)
-g_datadesc_user:
-    dw 0xFFFF
-    dw 0x0000
-    db 0x00
-    db 0b11110010
-    db 0b10101111
-    db 0x00
 g_end:
 
 g_desc:
@@ -253,8 +239,6 @@ g_desc:
 
 codeseg equ g_codedesc - g_nulldesc
 dataseg equ g_datadesc - g_nulldesc
-codeseg_user equ g_codedesc_user - g_nulldesc
-dataseg_user equ g_datadesc_user - g_nulldesc
 
 [bits 32]
 start_pm:
@@ -371,6 +355,7 @@ msg_pm: db "Entered PMode", 0
 
 [bits 64]
 %include "idt.asm"
+%include "gdt.asm"
 [extern main]
 [extern _stack]
 [global start_lm]

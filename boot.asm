@@ -113,7 +113,7 @@ root_dir:
 kernel_name: db "OS   BIN" ; 8 bytes
 db 0x89, 0 ; 2 bytes
 kernel_pos: db 1,0,0 ; 3 byte
-kernel_size: db 13,0,0 ; 3 byte
+kernel_size: db 15,0,0 ; 3 byte
 
 db "FONT RVF" ; 8 bytes
 db 0x89, 0 ; 2 bytes

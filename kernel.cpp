@@ -16,6 +16,7 @@
 #include <pci.h>
 #include <sound.h>
 #include <defines.h>
+#include <gdt.h>
 
 ptm_t* g_PTM = NULL;
 
@@ -231,6 +232,7 @@ namespace VGASELECT {
 
 extern "C" void main() {
     init_vga();
+    init_gdt();
     asm("cli");
     init_idt();
     PIT::init_timer();

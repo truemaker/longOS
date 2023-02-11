@@ -31,6 +31,7 @@ build:
 	$(GPP) $(ARGS64) "timer.cpp" -o "timer.o"
 	$(GPP) $(ARGS64) "pci.cpp" -o "pci.o"
 	$(GPP) $(ARGS64) "sound.cpp" -o "sound.o"
+	$(GPP) $(ARGS64) "gdt.cpp" -o "gdt.o"
 	$(LD) -T "link.ld" -Map memory.map
 	cat mbr.bin boot.bin kernel.bin > OS.bin
 	dd if=/dev/zero of=image.img bs=512 count=2880
