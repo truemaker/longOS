@@ -17,6 +17,7 @@
 #include <sound.h>
 #include <defines.h>
 #include <gdt.h>
+#include <task.h>
 
 ptm_t* g_PTM = NULL;
 extern uint64_t _stack;
@@ -48,8 +49,9 @@ ptm_t init_paging() {
     pt_t* pml4 = (pt_t*)request_page();
     memset(pml4, 0, 0x1000);
     ptm_t pm = ptm_t(pml4,get_memory_size()/0x1000);
+    g_PTM = &pm;
     print("Created PTM and PML4\n\r");
-    for (uint64_t i = 0; i < 0x800; i++) {
+    for (uint64_t i = 0; i < 0x200; i++) {
         pm.map((void*)(i*0x1000),(void*)(i*0x1000));
     }
     print("Identity mapped 512 pages at the start of memory\n\rLoading PML4...");
@@ -231,6 +233,19 @@ namespace VGASELECT {
     }
 }
 
+void taskA() {
+    print("Hello from process\n\r");
+    for (;;);
+    //yield();
+}
+
+void taskB() {
+    while (1) {
+        print("b");
+        yield();
+    }
+}
+
 extern "C" void main() {
     init_vga();
     init_gdt();
@@ -252,8 +267,9 @@ extern "C" void main() {
     convert_mmap_to_bmp();
     print_memory();
 
-    g_PTM = &init_paging();
+    init_paging();
     ACPI::init_acpi();
+    //init_task();
     heap::init_heap((void*)0x0000100000000000,0x10);
 
     if (!test_heap()) {
@@ -275,6 +291,10 @@ extern "C" void main() {
     ACPI::detect_hardware();
     ACPI::enable_acpi();
     PCI::print_pci();
+    //fork((void*)taskA);
+    //fork(taskB);
+    //yield();
+    //print("Hello from kernel\n\r");
     while (1) {
         uint64_t time = PIT::millis_since_boot;
         printf("Time since boot: %x:%x:%x.%x           \r",((time / 1000)/60)/60,((time / 1000)/60)%60,(time / 1000)%60,time % 1000);

@@ -1,14 +1,15 @@
+.SILENT:
 TARGET=x86_64
-ARGS=-Iinclude -ffreestanding -nostdlib -mno-red-zone -Wno-write-strings -fpermissive
+ARGS=-Iinclude -ffreestanding -nostdlib -mno-red-zone -Wno-write-strings -fno-permissive -Wno-attributes -Wno-int-to-pointer-cast -Wno-pointer-arith
 ARGS64=$(ARGS) -m64 -c
-EMUARGS=-m 256M image.img -device qemu-xhci -soundhw all -audiodev alsa,id=speaker
+EMUARGS=-m 256M image.img -device qemu-xhci -audiodev alsa,id=speaker -soundhw all
 GPP=/usr/local/$(TARGET)elfgcc/bin/$(TARGET)-elf-g++
 LD=/usr/local/$(TARGET)elfgcc/bin/$(TARGET)-elf-ld
 all:
 	make run
 	make cleanUp
 build:
-	dd if=/dev/zero of=zero.bin bs=512 count=26
+	dd if=/dev/zero of=zero.bin bs=512 count=26 status=none
 	nasm -f bin boot.asm -o boot.bin
 	nasm -f bin mbr.asm -o mbr.bin
 	nasm -f bin font.asm -o font.bin
@@ -34,9 +35,9 @@ build:
 	$(GPP) $(ARGS64) "gdt.cpp" -o "gdt.o"
 	$(LD) -T "link.ld" -Map memory.map
 	cat mbr.bin boot.bin kernel.bin > OS.bin
-	dd if=/dev/zero of=image.img bs=512 count=2880
-	dd if=OS.bin of=image.img conv=notrunc
-	dd if=font.bin of=image.img conv=notrunc seek=409600
+	dd if=/dev/zero of=image.img bs=512 count=2880 status=none
+	dd if=OS.bin of=image.img conv=notrunc status=none
+	dd if=font.bin of=image.img conv=notrunc seek=409600 status=none
 run: build
 	qemu-system-$(TARGET) $(EMUARGS) -serial stdio
 debug: build

@@ -4,6 +4,7 @@
 #include <asm.h>
 #include <memory.h>
 #include <serial.h>
+#include <debug.h>
 
 
 void(*main_keyboard_handler)(uint8_t scan_code);
@@ -57,7 +58,9 @@ extern "C" void isr1_handler() {
 
 __attribute__((interrupt)) void pagef_handler(interrupt_frame_t* int_frame) {
     asm("cli");
-    printf("A page fault has occured\n\rFault address: %h\n\rPML4: %h\n\rRIP: %h\n\r%t\n\rReadable Message: ", read_cr2(), read_cr3(),int_frame->rip);
+    printf("A page fault has occured\n\rFault address: %h\n\rPML4: %h\n\rRIP: %h\n\r", read_cr2(), read_cr3(),int_frame->rip);
+    trace(10,(struct stackframe*)int_frame->rsp);
+    print("\n\rReadable Message: ");
     uint64_t err = int_frame->err_code;
     if (err & 0x4) print("User");
     else print("Kernel");
@@ -67,7 +70,13 @@ __attribute__((interrupt)) void pagef_handler(interrupt_frame_t* int_frame) {
     print(" a page that is ");
     if (err & 1) print("present");
     else print("not present");
-    if (err & (1<<4)) print(" during an instruction fetch");
+    print(" during ");
+    if ((1 << 4)&int_frame->err_code) print("instruction-fetch");
+    else print("regular execution");
+    print(" due to ");
+    if ((1 << 6)&int_frame->err_code) print("shadow-stack access");
+    else if ((1 << 5)&int_frame->err_code) print("protection-key");
+    else print("bad programming");
     print("\n\r");
     for (;;);
     serial::write_serial("Pulsing Reset line.\n\r",21);
@@ -95,7 +104,8 @@ __attribute__((interrupt)) void ssf_handler(interrupt_frame_t* int_frame) {
 
 __attribute__((interrupt)) void gpf_handler(interrupt_frame_t* int_frame) {
     asm("cli");
-    printf("A general protection fault has occured\n\rCS: %h\n\rRIP: %h\n\r%t",int_frame->cs,int_frame->rip);
+    printf("A general protection fault has occured\n\rCS: %h\n\rRIP: %h\n\r",int_frame->cs,int_frame->rip);
+    trace(10,(struct stackframe*)__builtin_frame_address(0));
     print("Readable Message: ");
     if (int_frame->err_code == 0) print("Not Segment Related");
     else {

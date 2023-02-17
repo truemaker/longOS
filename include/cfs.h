@@ -44,8 +44,8 @@ namespace CFS {
         device_t* dev;
         cfs(partition_t,device_t*,ptm_t*);
         void list_files();
-        void cfs::print_file(file_entry_t* file);
-        void cfs::recalculate_header();
-        void* cfs::read_file(uint64_t);
+        void print_file(file_entry_t* file);
+        void recalculate_header();
+        void* read_file(uint64_t);
     } cfs_t;
 }

@@ -134,31 +134,36 @@ void free_pages(void* addr, uint64_t count) {
     }
 }
 
-void memset(void* addr, uint8_t val, uint64_t count) {
-    for (uint64_t i = 0; i < count; i++) {
-        *(uint8_t*)((uint64_t)addr + i) = val;
-    }
+void memset(void* addr, uint8_t sval, uint64_t count) {
+    if(!count){return;} // nothing to set?
+    uint64_t val = (sval & 0xFF); // create a 64-bit version of 'sval'
+    val |= ((val << 8) & 0xFF00);
+    val |= ((val << 16) & 0xFFFF0000);
+    val |= ((val << 32) & 0xFFFFFFFF00000000);
+    
+    while(count >= 8){ *(uint64_t*)addr = (uint64_t)val; addr += 8; count -= 8; }
+    while(count >= 4){ *(uint32_t*)addr = (uint32_t)val; addr += 4; count -= 4; }
+    while(count >= 2){ *(uint16_t*)addr = (uint16_t)val; addr += 2; count -= 2; }
+    while(count >= 1){ *(uint8_t*)addr = (uint8_t)val; addr += 1; count -= 1; }
+    return; 
 }
 
 bool memcmp(void* a, void* b, uint64_t count) {
-    uint8_t* ba = (uint8_t*)a;
-    uint8_t* bb = (uint8_t*)b;
-    for (uint64_t i = 0; i < count; i++) {
-        if (*ba != *bb) return false;
-        ba++;
-        bb++;
-    }
+    if(!count){return true;}
+    while(count >= 8){ if (*(uint64_t*)a != *(uint64_t*)b) return false; a += 8; b += 8; count -= 8; }
+    while(count >= 4){ if (*(uint32_t*)a != *(uint32_t*)b) return false; a += 4; b += 4; count -= 4; }
+    while(count >= 2){ if (*(uint16_t*)a != *(uint16_t*)b) return false; a += 2; b += 2; count -= 2; }
+    while(count >= 1){ if (*(uint8_t*)a != *(uint8_t*)b) return false; a += 1; b += 1; count -= 1; }
     return true;
 }
 
 void memcpy(void* dst, void* src, uint64_t count) {
-    uint8_t* bdst = (uint8_t*)dst;
-    uint8_t* bsrc = (uint8_t*)src;
-    for (uint64_t i = 0; i < count; i++) {
-        *bdst = *bsrc;
-        bsrc++;
-        bdst++;
-    }
+    if(!count){return;} // nothing to copy?
+    while(count >= 8){ *(uint64_t*)dst = *(uint64_t*)src; dst += 8; src += 8; count -= 8; }
+    while(count >= 4){ *(uint32_t*)dst = *(uint32_t*)src; dst += 4; src += 4; count -= 4; }
+    while(count >= 2){ *(uint16_t*)dst = *(uint16_t*)src; dst += 2; src += 2; count -= 2; }
+    while(count >= 1){ *(uint8_t*)dst = *(uint8_t*)src; dst += 1; src += 1; count -= 1; }
+    return;
 }
 
 void print_segments() {
@@ -184,7 +189,7 @@ void print_segments() {
     printf("Used: %x %s\n\rFree: %x %s\n\rReserved: %x %s\n\r", displayu, unit[unitu], displayf, unit[unitf], displayr, unit[unitr]);
 }
 
-void* request_page(bool map_page=false) {
+void* request_page(bool map_page) {
     debugf("Requested new page\n\r");
     uint64_t addr = 0;
     uint64_t mem_size = align_to_start(get_memory_size(),0x1000);
@@ -202,7 +207,7 @@ void* request_page(bool map_page=false) {
     return (void*)addr;
 }
 
-void* request_pages(uint64_t count,bool map_page=true) {
+void* request_pages(uint64_t count,bool map_page) {
     debugf("Requested new pages\n\r");
     uint64_t i = 0;
     uint64_t pages = 0;

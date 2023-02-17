@@ -226,6 +226,15 @@ uint16_t coord_from_pos(uint16_t x, uint16_t y) {
     return (y*VGA_WIDTH)+x;
 }
 
+void noprint(const char *str) {
+    char* cPtr = (char*)str;
+    int i = 0;
+    while (*cPtr != 0) {
+        serial::write_serial(*cPtr);
+        cPtr++;
+    }
+}
+
 void print(const char *str) {
     char* cPtr = (char*)str;
     int i = 0;
@@ -267,7 +276,7 @@ void printc(char c) {
             if (vga_pos > VGA_WIDTH*VGA_HEIGHT) set_cursor_pos(vga_pos);
     }
 #ifdef DEBUG_SERIAL
-    write_serial(c);
+    serial::write_serial(c);
 #endif
 }
 
@@ -329,32 +338,39 @@ const char* HexToString(T value){
   return hexToStringOutput;
 }
 
-int handle_format(char* format, va_list ap) {
+int handle_format(bool print_characters, char* format, va_list ap) {
     if (*format == 0) return -1;
     switch (*format) {
         case 's':
-            print(va_arg(ap, char*));
+            if (print_characters) print(va_arg(ap, char*));
+            else noprint(va_arg(ap, char*));
             return 0;
         case '%':
-            printc('%');
+            if (print_characters) printc('%');
+            else serial::write_serial('%');
             return 0;
         case 'c':
-            printc((char)va_arg(ap, int));
+            if (print_characters) printc((char)va_arg(ap, int));
+            else serial::write_serial((char)va_arg(ap, int));
             return 0;
         case 'h':
-            print(HexToString(va_arg(ap, uint64_t)));
+            if (print_characters) print(HexToString(va_arg(ap, uint64_t)));
+            else noprint(HexToString(va_arg(ap, uint64_t)));
             return 0;
         case 't':
             trace(32);
             return 0;
         case 'f':
-            print(FloatToString(va_arg(ap,double)));
+            if (print_characters) print(FloatToString(va_arg(ap,double)));
+            else noprint(FloatToString(va_arg(ap, double)));
             return 0;
         case 'x':
-            print(IntegerToString(va_arg(ap,uint64_t)));
+            if (print_characters) print(IntegerToString(va_arg(ap,uint64_t)));
+            else noprint(IntegerToString(va_arg(ap, uint64_t)));
             return 0;
         default:
-            print("Invalid format");
+            if (print_characters) print("Invalid format");
+            else noprint("Invalid format");
             return 0;
     }
 }
@@ -368,7 +384,7 @@ void printf(const char* str, ...) {
         switch (*cPtr) {
             case '%':
                 cPtr++;
-                cPtr += handle_format(cPtr,ap);
+                cPtr += handle_format(true,cPtr,ap);
                 break;
             default:
                 printc(*cPtr);
@@ -379,9 +395,33 @@ void printf(const char* str, ...) {
     va_end(ap);
 }
 
+void noprintf(const char* str, ...) {
+    va_list ap;
+    va_start(ap, str);
+    char* cPtr = (char*)str;
+    int i = 0;
+    while (*cPtr != 0) {
+        switch (*cPtr) {
+            case '%':
+                cPtr++;
+                cPtr += handle_format(false,cPtr,ap);
+                break;
+            default:
+                serial::write_serial(*cPtr);
+        }
+        cPtr++;
+    }
+    set_cursor_pos(vga_pos);
+    va_end(ap);
+}
+
 void debugf(const char *str, ...) {
 #ifdef DEBUG
+#ifndef DEBUG_SERIAL
     printf(str);
+#else
+    noprintf(str);
+#endif
 #endif
 }
 
@@ -413,7 +453,7 @@ void print_hex(uint64_t quad) {
     print(HexToString(quad));
 }
 
-void set_line_color(uint64_t line, uint8_t c, uint64_t start = 0, uint64_t end = VGA_WIDTH) {
+void set_line_color(uint64_t line, uint8_t c, uint64_t start, uint64_t end) {
     for (uint16_t i = start; i < end; i++) {
         *(VGA_MEM+(i+(line*VGA_WIDTH))*2+1) = c;
     }

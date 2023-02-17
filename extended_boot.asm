@@ -356,6 +356,7 @@ msg_pm: db "Entered PMode", 0
 [bits 64]
 %include "idt.asm"
 %include "gdt.asm"
+%include "task.asm"
 [extern main]
 [extern _stack]
 [global start_lm]

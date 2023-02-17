@@ -3,16 +3,17 @@
 #include <idt.h>
 #include <io.h>
 #include <memory.h>
-struct stackframe {
-  struct stackframe* ebp;
-  uint64_t rip;
-};
+#include <debug.h>
 
 extern uint8_t end_extboot;
 
 void trace(unsigned int frames){
     struct stackframe *stk;
     stk = (struct stackframe*) __builtin_frame_address(0);
+    trace(frames,stk);
+}
+
+void trace(unsigned int frames, struct stackframe* stk) {
     print("Stack trace:\n\r");
     for(unsigned int frame = 0; stk && frame < frames; ++frame)
     {
