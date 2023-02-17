@@ -149,7 +149,7 @@ void memset(void* addr, uint8_t sval, uint64_t count) {
 }
 
 bool memcmp(void* a, void* b, uint64_t count) {
-    if(!count){return true;}
+    if(!count){return true;} // nothing to compare?
     while(count >= 8){ if (*(uint64_t*)a != *(uint64_t*)b) return false; a += 8; b += 8; count -= 8; }
     while(count >= 4){ if (*(uint32_t*)a != *(uint32_t*)b) return false; a += 4; b += 4; count -= 4; }
     while(count >= 2){ if (*(uint16_t*)a != *(uint16_t*)b) return false; a += 2; b += 2; count -= 2; }
