@@ -17,9 +17,10 @@
 - MBR
 - PC Speaker
 - PIT
+- Multi-tasking (co-operative)
 ## Future
 The future is difficult
-- A task.c file thats not empty
+- Multi-tasking (preemptive)
 - Usermode (sometime when i decide to not do something else instead)
 - A PTM that doesn't take 5 seconds to allocate 10000 pages
 ## License
