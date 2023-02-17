@@ -6,7 +6,7 @@
 
 namespace ACPI {
     bool extended = false;
-    sdt_header_t *sdt;
+    sdt_header_t *sdt = 0;
     bool validate_sdt(sdt_header_t* header) {
         uint64_t sum = 0;
         for (uint64_t i = 0; i < header->length; i++) {

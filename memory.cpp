@@ -2,9 +2,9 @@
 #include <vga.h>
 #include <bitmap.h>
 #include <asm.h>
-uint64_t free_mem;
-uint64_t reserved_mem;
-uint64_t used_mem;
+uint64_t free_mem = 0;
+uint64_t reserved_mem = 0;
+uint64_t used_mem = 0;
 bitmap_t memory_map;
 void print_memory() {
     for (uint64_t i = 0; i < memory_region_count; i++) {
@@ -267,7 +267,7 @@ void ptm_t::map(void* vmem, void* pmem) {
     pmem = (void*)(((uint64_t)pmem >> 12) << 12);
     pmem = (void*)(((uint64_t)pmem >> 12) << 12);
     debugf("Mapping %h -> %h\n\rPML4: %h\n\r",vmem,pmem,pml4);
-    page_index_t pi = page_index_t(align_to_start((uint64_t)vmem,0x1000));
+    page_index_t pi = page_index_t((uint64_t)vmem);
     pd_entry_t pde;
     pde = pml4->entries[pi.pdp_i];
     pt_t* pdp;
@@ -313,10 +313,10 @@ void ptm_t::map(void* vmem, void* pmem) {
     debugf("PT: %h\n\r",pt);
     pde = pt->entries[pi.p_i];
     pde.addr = (uint64_t)pmem >> 12;
-    pde.p = true;
     pde.rw = true;
+    pde.p = true;
     pt->entries[pi.p_i] = pde;
-    invlpg(vmem);
+    read_cr3();
     debugf("Mapping complete\n\r");
 }
 
