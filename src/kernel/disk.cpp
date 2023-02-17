@@ -2,6 +2,7 @@
 #include <io.h>
 #include <vga.h>
 #include <serial.h>
+#include <timer.h>
 
 device_t::device(uint16_t b, uint16_t ctl, uint8_t ms, char* name) {
     base = b;
@@ -48,8 +49,10 @@ void init_disk(device_t* dev) {
 }
 
 void reset_device(device_t* dev) {
+    print("Resetting drive...\n\r");
     uint8_t dctl = inb(dev->dev_ctl);
     outb(dev->dev_ctl, dctl | 4);
+    dctl = inb(dev->dev_ctl);
     dctl &= ~4;
     outb(dev->dev_ctl, dctl);
 }
@@ -76,10 +79,14 @@ void disk_delay(device_t* dev) {
     }
 }
 
-void wait_disk_ready(device_t* dev) {
+bool wait_disk_ready(device_t* dev) {
     uint8_t stat = inb(dev->dev_ctl);
-    while (stat & (1 << 7)) stat = inb(dev->dev_ctl);
-    while (!(stat & (1 << 3))) stat = inb(dev->dev_ctl);
+    timer_t t;
+    PIT::start_timer(&t);
+    while (stat & (1 << 7) && !PIT::timer_expired(t,400)) stat = inb(dev->dev_ctl);
+    while (!(stat & (1 << 3)) && !PIT::timer_expired(t,400)) stat = inb(dev->dev_ctl);
+    if (PIT::timer_expired(t,400)) { reset_device(dev); return true; }
+    return false;
 }
 
 void read_disk(device_t* dev, uint8_t* buffer, uint32_t lba, uint8_t sectors) {
@@ -89,10 +96,10 @@ void read_disk(device_t* dev, uint8_t* buffer, uint32_t lba, uint8_t sectors) {
     outb(dev->base + DEV_OFF_CL, lba >> 8);
     outb(dev->base + DEV_OFF_CH, lba >> 16);
     outb(dev->base + DEV_OFF_CMD, 0x20);
-    wait_disk_ready(dev);
+    if (wait_disk_ready(dev)) return read_disk(dev,buffer,lba,sectors);
     uint16_t* buffer16 = (uint16_t*)buffer;
     for (uint16_t i = 0; i < sectors; i++) {
-        wait_disk_ready(dev);
+        if (wait_disk_ready(dev)) return read_disk(dev,buffer,lba,sectors);
         for (uint16_t j = 0; j < 256; j++) {
             uint16_t word = inw(dev->base + DEV_OFF_DATA);
             *buffer16 = word;
@@ -109,10 +116,10 @@ void write_disk(device_t* dev, uint8_t* buffer, uint32_t lba, uint8_t sectors) {
     outb(dev->base + DEV_OFF_CL, lba >> 8);
     outb(dev->base + DEV_OFF_CH, lba >> 16);
     outb(dev->base + DEV_OFF_CMD, 0x30);
-    wait_disk_ready(dev);
+    if (wait_disk_ready(dev)) return write_disk(dev,buffer,lba,sectors);
     uint16_t* buffer16 = (uint16_t*)buffer;
     for (uint16_t i = 0; i < sectors; i++) {
-        wait_disk_ready(dev);
+        if (wait_disk_ready(dev)) return write_disk(dev,buffer,lba,sectors);
         for (uint16_t j = 0; j < 256; j++) {
             outw(dev->base + DEV_OFF_DATA,*buffer16);
             disk_delay(dev);

@@ -41,4 +41,12 @@ namespace PIT {
     void set_frequency(uint64_t frequency) {
         set_divisor(base_frequency / frequency);
     }
+
+    bool timer_expired(timer_t t,uint64_t l) {
+        return millis_since_boot >= (t+l);
+    }
+
+    void start_timer(timer_t* t) {
+        *t = millis_since_boot;
+    }
 }

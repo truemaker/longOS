@@ -270,6 +270,13 @@ extern "C" void main() {
         asm("cli");
         for (;;);
     }
+    
+    //CFS::cfs_t fs = init_disk();
+    //print("Reading font.rvf\n\r");
+    //if (!fs.read_file(1,(uint8_t*)buffer1,0)) for (;;);
+    //print("Read font.rvf\n\r");
+    //write_font((uint8_t*)font::parse_font((uint8_t*)buffer1),16);
+    //for (;;);
 
     ACPI::fadt_t* fadt = (ACPI::fadt_t*)ACPI::get_table("FACP");
     print("Preffered Power Management Mode: ");
