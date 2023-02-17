@@ -3,30 +3,30 @@ OUTPUT_FORMAT(binary)
 ENTRY (_start)
 
 INPUT (
-    extboot.o
-    kernel.o
-    vga.o
-    io.o
-    idt.o
-    asm.o
-    debug.o
-    memory.o
-    bitmap.o
-    task.o
-    serial.o
-    disk.o
-    cfs.o
-    heap.o
-    font.o
-    acpi.o
-    timer.o
-    pci.o
-    sound.o
-    gdt.o
+    build/kernel/extboot.o
+    build/kernel/kernel.o
+    build/kernel/vga.o
+    build/kernel/io.o
+    build/kernel/idt.o
+    build/kernel/asm.o
+    build/kernel/debug.o
+    build/kernel/memory.o
+    build/kernel/bitmap.o
+    build/kernel/task.o
+    build/kernel/serial.o
+    build/kernel/disk.o
+    build/kernel/cfs.o
+    build/kernel/heap.o
+    build/kernel/font.o
+    build/kernel/acpi.o
+    build/kernel/timer.o
+    build/kernel/pci.o
+    build/kernel/sound.o
+    build/kernel/gdt.o
 )
 
 OUTPUT (
-    kernel.bin
+    build/kernel/kernel.bin
 )
 
 SECTIONS {

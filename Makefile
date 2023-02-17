@@ -6,42 +6,47 @@ SRC=src
 SRC_KERNEL=$(SRC)/kernel
 SRC_BOOT=$(SRC)/boot
 SRC_RES=$(SRC)/res
+BUILD=build
+BUILD_KERNEL=$(BUILD)/kernel
+BUILD_BOOT=$(BUILD)/boot
+BUILD_RES=$(BUILD)/res
 EMUARGS=-m 256M image.img -device qemu-xhci -audiodev alsa,id=speaker -soundhw all
 GPP=/usr/local/$(TARGET)elfgcc/bin/$(TARGET)-elf-g++
 LD=/usr/local/$(TARGET)elfgcc/bin/$(TARGET)-elf-ld
 all:
 	make run
 	make cleanUp
-build:
-	dd if=/dev/zero of=zero.bin bs=512 count=26 status=none
-	nasm -f bin $(SRC_BOOT)/boot.asm -o boot.bin
-	nasm -f bin $(SRC_BOOT)/mbr.asm -o mbr.bin
-	nasm -f bin $(SRC_RES)/font.asm -o font.bin
-	nasm -i$(SRC_KERNEL) -f elf64 $(SRC_KERNEL)/extended_boot.asm -o extboot.o
-	$(GPP) $(KERNEL_ARGS64) "$(SRC_KERNEL)/kernel.cpp" -o "kernel.o"
-	$(GPP) $(KERNEL_ARGS64) "$(SRC_KERNEL)/vga.cpp" -o "vga.o"
-	$(GPP) $(KERNEL_ARGS64) "$(SRC_KERNEL)/io.cpp" -o "io.o"
-	$(GPP) $(KERNEL_ARGS64) -mgeneral-regs-only "$(SRC_KERNEL)/idt.cpp" -o "idt.o"
-	$(GPP) $(KERNEL_ARGS64) "$(SRC_KERNEL)/asm.cpp" -o "asm.o"
-	$(GPP) $(KERNEL_ARGS64) "$(SRC_KERNEL)/debug.cpp" -o "debug.o"
-	$(GPP) $(KERNEL_ARGS64) "$(SRC_KERNEL)/memory.cpp" -o "memory.o"
-	$(GPP) $(KERNEL_ARGS64) "$(SRC_KERNEL)/bitmap.cpp" -o "bitmap.o"
-	$(GPP) $(KERNEL_ARGS64) "$(SRC_KERNEL)/task.cpp" -o "task.o"
-	$(GPP) $(KERNEL_ARGS64) "$(SRC_KERNEL)/serial.cpp" -o "serial.o"
-	$(GPP) $(KERNEL_ARGS64) "$(SRC_KERNEL)/disk.cpp" -o "disk.o"
-	$(GPP) $(KERNEL_ARGS64) "$(SRC_KERNEL)/cfs.cpp" -o "cfs.o"
-	$(GPP) $(KERNEL_ARGS64) "$(SRC_KERNEL)/heap.cpp" -o "heap.o"
-	$(GPP) $(KERNEL_ARGS64) "$(SRC_KERNEL)/font.cpp" -o "font.o"
-	$(GPP) $(KERNEL_ARGS64) "$(SRC_KERNEL)/acpi.cpp" -o "acpi.o"
-	$(GPP) $(KERNEL_ARGS64) "$(SRC_KERNEL)/timer.cpp" -o "timer.o"
-	$(GPP) $(KERNEL_ARGS64) "$(SRC_KERNEL)/pci.cpp" -o "pci.o"
-	$(GPP) $(KERNEL_ARGS64) "$(SRC_KERNEL)/sound.cpp" -o "sound.o"
-	$(GPP) $(KERNEL_ARGS64) "$(SRC_KERNEL)/gdt.cpp" -o "gdt.o"
+prepare:
+	mkdir -p build/kernel build/boot build/res
+build: prepare
+	nasm -f bin $(SRC_BOOT)/boot.asm -o $(BUILD_BOOT)/boot.bin
+	nasm -f bin $(SRC_BOOT)/mbr.asm -o $(BUILD_BOOT)/mbr.bin
+	nasm -f bin $(SRC_RES)/font.asm -o $(BUILD_RES)/font.bin
+	nasm -i$(SRC_KERNEL) -f elf64 $(SRC_KERNEL)/extended_boot.asm -o $(BUILD_KERNEL)/extboot.o
+	$(GPP) $(KERNEL_ARGS64) "$(SRC_KERNEL)/kernel.cpp" -o "$(BUILD_KERNEL)/kernel.o"
+	$(GPP) $(KERNEL_ARGS64) "$(SRC_KERNEL)/vga.cpp" -o "$(BUILD_KERNEL)/vga.o"
+	$(GPP) $(KERNEL_ARGS64) "$(SRC_KERNEL)/io.cpp" -o "$(BUILD_KERNEL)/io.o"
+	$(GPP) $(KERNEL_ARGS64) -mgeneral-regs-only "$(SRC_KERNEL)/idt.cpp" -o "$(BUILD_KERNEL)/idt.o"
+	$(GPP) $(KERNEL_ARGS64) "$(SRC_KERNEL)/asm.cpp" -o "$(BUILD_KERNEL)/asm.o"
+	$(GPP) $(KERNEL_ARGS64) "$(SRC_KERNEL)/debug.cpp" -o "$(BUILD_KERNEL)/debug.o"
+	$(GPP) $(KERNEL_ARGS64) "$(SRC_KERNEL)/memory.cpp" -o "$(BUILD_KERNEL)/memory.o"
+	$(GPP) $(KERNEL_ARGS64) "$(SRC_KERNEL)/bitmap.cpp" -o "$(BUILD_KERNEL)/bitmap.o"
+	$(GPP) $(KERNEL_ARGS64) "$(SRC_KERNEL)/task.cpp" -o "$(BUILD_KERNEL)/task.o"
+	$(GPP) $(KERNEL_ARGS64) "$(SRC_KERNEL)/serial.cpp" -o "$(BUILD_KERNEL)/serial.o"
+	$(GPP) $(KERNEL_ARGS64) "$(SRC_KERNEL)/disk.cpp" -o "$(BUILD_KERNEL)/disk.o"
+	$(GPP) $(KERNEL_ARGS64) "$(SRC_KERNEL)/cfs.cpp" -o "$(BUILD_KERNEL)/cfs.o"
+	$(GPP) $(KERNEL_ARGS64) "$(SRC_KERNEL)/heap.cpp" -o "$(BUILD_KERNEL)/heap.o"
+	$(GPP) $(KERNEL_ARGS64) "$(SRC_KERNEL)/font.cpp" -o "$(BUILD_KERNEL)/font.o"
+	$(GPP) $(KERNEL_ARGS64) "$(SRC_KERNEL)/acpi.cpp" -o "$(BUILD_KERNEL)/acpi.o"
+	$(GPP) $(KERNEL_ARGS64) "$(SRC_KERNEL)/timer.cpp" -o "$(BUILD_KERNEL)/timer.o"
+	$(GPP) $(KERNEL_ARGS64) "$(SRC_KERNEL)/pci.cpp" -o "$(BUILD_KERNEL)/pci.o"
+	$(GPP) $(KERNEL_ARGS64) "$(SRC_KERNEL)/sound.cpp" -o "$(BUILD_KERNEL)/sound.o"
+	$(GPP) $(KERNEL_ARGS64) "$(SRC_KERNEL)/gdt.cpp" -o "$(BUILD_KERNEL)/gdt.o"
 	$(LD) -T "link.ld" -Map memory.map
-	cat mbr.bin boot.bin kernel.bin > OS.bin
+	cat $(BUILD_BOOT)/mbr.bin $(BUILD_BOOT)/boot.bin $(BUILD_KERNEL)/kernel.bin > $(BUILD)/OS.bin
 	dd if=/dev/zero of=image.img bs=512 count=2880 status=none
-	dd if=OS.bin of=image.img conv=notrunc status=none
-	dd if=font.bin of=image.img conv=notrunc seek=409600 status=none
+	dd if=$(BUILD)/OS.bin of=image.img conv=notrunc status=none
+	dd if=$(BUILD_RES)/font.bin of=image.img conv=notrunc seek=409600 status=none
 run: build
 	qemu-system-$(TARGET) $(EMUARGS) -serial stdio
 debug: build
@@ -52,8 +57,9 @@ kvm: build
 	kvm-spice $(EMUARGS) -serial stdio
 	make clean
 
-clean:
+clean: prepare
 	rm -rf *.o *.bin *.img
+	rm -rf build
 
 cleanUp: clean
 	rm -rf *.log
