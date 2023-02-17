@@ -21,6 +21,8 @@
 
 ptm_t* g_PTM = NULL;
 extern uint64_t _stack;
+uint16_t buffer0[256];
+uint16_t buffer1[2048];
 
 bool test_heap() {
     void* a = heap::malloc(0x100);
@@ -74,34 +76,28 @@ ptm_t init_paging() {
     return pm;
 }
 
-void init_disk() {
+CFS::cfs_t init_disk() {
     print("Init disk...\n\r");
 
     device_t dev0 = device_t(0x1f0,0x3F6,0xA0,"Disk 1");
     init_disk(&dev0);
-    print_device(&dev0);
 
     device_t dev1 = device_t(0x1f0,0x3F6,0xB0,"Disk 2");
     init_disk(&dev1);
-    print_device(&dev1);
 
     device_t dev2 = device_t(0x170,0x376,0xA0,"Disk 3");
     init_disk(&dev2);
-    print_device(&dev2);
 
     device_t dev3 = device_t(0x170,0x376,0xB0,"Disk 4");
     init_disk(&dev3);
-    print_device(&dev3);
 
-    uint16_t *buffer = (uint16_t*)heap::malloc(2*256);
-    read_disk(&dev0,(uint8_t*)buffer,0,1);
-    mbr_t* mbr = (mbr_t*)(&buffer[0xDB]);
+    read_disk(&dev0,(uint8_t*)buffer0,0,1);
+    mbr_t* mbr = (mbr_t*)(&buffer0[0xDB]);
+    print_mbr(mbr);
 
     CFS::cfs_t cfs = CFS::cfs_t(mbr->partition0,&dev0, g_PTM);
-    //cfs.list_files();
-    serial::write_serial("Disk there is\n\r",15);
-    //free(parse_font((uint8_t*)(cfs.read_file(1))));
-    heap::free(buffer);
+    cfs.list_files();
+    return cfs;
 }
 
 namespace VGASELECT {
@@ -274,7 +270,7 @@ extern "C" void main() {
         asm("cli");
         for (;;);
     }
-    
+
     ACPI::fadt_t* fadt = (ACPI::fadt_t*)ACPI::get_table("FACP");
     print("Preffered Power Management Mode: ");
     switch (fadt->preferred_power_management_profile) {

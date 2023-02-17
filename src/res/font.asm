@@ -2,6 +2,7 @@ db "rfnt"
 db 8
 db 16
 db 1;80
+db 1;
 db 0b00011000
 db 0b00100100
 db 0b01000010

@@ -97,3 +97,4 @@ void print_trans();
 void set_line_color(uint64_t line, uint8_t c, uint64_t start=0, uint64_t end=VGA_WIDTH);
 void disable_cursor();
 void enable_cursor();
+extern void write_font(unsigned char *buf, unsigned font_height);

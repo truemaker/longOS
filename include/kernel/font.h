@@ -8,6 +8,7 @@ namespace font {
         uint8_t width;
         uint8_t height;
         uint8_t chars;
+        uint8_t relocations;
     } font_header_t;
     
     typedef struct font_relocation {

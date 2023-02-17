@@ -536,7 +536,7 @@ static void set_plane(unsigned p)
 	outb(GRAPHICS_SEQ_DATA, pmask);
 }
 
-static void write_font(unsigned char *buf, unsigned font_height)
+void write_font(unsigned char *buf, unsigned font_height)
 {
 	unsigned char seq2, seq4, gc4, gc5, gc6;
 	unsigned i;

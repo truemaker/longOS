@@ -46,6 +46,6 @@ namespace CFS {
         void list_files();
         void print_file(file_entry_t* file);
         void recalculate_header();
-        void* read_file(uint64_t);
+        void* read_file(uint64_t,uint8_t*,uint64_t);
     } cfs_t;
 }

@@ -10,8 +10,10 @@ namespace CFS {
         read_disk(dev,fsbuffer,partition.lba,1);
         memcpy(&header,fsbuffer,sizeof(header_t));
         start_lba = partition.lba + header.reserved_sectors;
-        uint8_t pages_for_root_dir = ((header.root_dir_size * header.sectors_per_block * 512) & ~0xfff) >> 12;
-        files = (file_entry*)ptm->allocate_pages(pages_for_root_dir);
+        uint8_t pages_for_root_dir = align(((header.root_dir_size * header.sectors_per_block * 512) & ~0xfff),0x1000) >> 12;
+        files = (file_entry*)request_pages(pages_for_root_dir);
+        g_PTM->mark_page_used(files);
+        g_PTM->map(files,files);
         read_disk(dev,(uint8_t*)files,start_lba,header.root_dir_size*header.sectors_per_block);
         read_disk(dev,fsbuffer,partition.lba,1);
         recalculate_header();
@@ -116,11 +118,11 @@ namespace CFS {
         header.free_blocks = blocks - used;
     }
 
-    void* cfs::read_file(uint64_t id) {
+    void* cfs::read_file(uint64_t id, uint8_t* buffer,uint64_t block) {
         file_entry_t* file = (file_entry_t*)files+id;
-        if (!(file->flags & CFS_FILE_FLAG_PRESENT)) {print("File non existent");}
-        uint8_t* buffer = (uint8_t*)heap::malloc(file->size_lo*header.sectors_per_block*512);
-        read_disk(dev,buffer,file->pos_lo*header.sectors_per_block,file->size_lo*header.sectors_per_block);
+        if (!(file->flags & CFS_FILE_FLAG_PRESENT)) {print("File non existent"); return 0;}
+        if (block > file->size_lo) {print("Out of bounds"); return 0;}
+        read_disk(dev,buffer,(file->pos_lo+block)*header.sectors_per_block,file->size_lo*header.sectors_per_block);
         return (void*)buffer;
     }
 }
