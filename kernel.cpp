@@ -236,19 +236,11 @@ namespace VGASELECT {
 void taskA() {
     print("Hello from process a\n\r");
     yield();
-    while (1) {
-        print("a");
-        yield();
-    }
 }
 
 void taskB() {
     print("Hello from process b\n\r");
     yield();
-    while (1) {
-        print("b");
-        yield();
-    }
 }
 
 extern "C" void main() {
@@ -300,10 +292,6 @@ extern "C" void main() {
     fork((void*)taskB);
     yield();
     print("Hello from kernel\n\r");
-    while (1) {
-        print("k");
-        yield();
-    }
     while (1) {
         uint64_t time = PIT::millis_since_boot;
         printf("Time since boot: %x:%x:%x.%x           \r",((time / 1000)/60)/60,((time / 1000)/60)%60,(time / 1000)%60,time % 1000);
