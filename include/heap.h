@@ -15,6 +15,7 @@ namespace heap {
 
     void init_heap(void*,size_t);
     void* malloc(size_t);
+    void* calloc(size_t,uint8_t);
     void free(void*);
     void expand_heap(size_t);    
 }

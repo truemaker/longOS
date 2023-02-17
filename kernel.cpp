@@ -234,12 +234,17 @@ namespace VGASELECT {
 }
 
 void taskA() {
-    print("Hello from process\n\r");
-    for (;;);
-    //yield();
+    print("Hello from process a\n\r");
+    yield();
+    while (1) {
+        print("a");
+        yield();
+    }
 }
 
 void taskB() {
+    print("Hello from process b\n\r");
+    yield();
     while (1) {
         print("b");
         yield();
@@ -269,7 +274,7 @@ extern "C" void main() {
 
     init_paging();
     ACPI::init_acpi();
-    //init_task();
+    init_task();
     heap::init_heap((void*)0x0000100000000000,0x10);
 
     if (!test_heap()) {
@@ -291,10 +296,14 @@ extern "C" void main() {
     ACPI::detect_hardware();
     ACPI::enable_acpi();
     PCI::print_pci();
-    //fork((void*)taskA);
-    //fork(taskB);
-    //yield();
-    //print("Hello from kernel\n\r");
+    fork((void*)taskA);
+    fork((void*)taskB);
+    yield();
+    print("Hello from kernel\n\r");
+    while (1) {
+        print("k");
+        yield();
+    }
     while (1) {
         uint64_t time = PIT::millis_since_boot;
         printf("Time since boot: %x:%x:%x.%x           \r",((time / 1000)/60)/60,((time / 1000)/60)%60,(time / 1000)%60,time % 1000);

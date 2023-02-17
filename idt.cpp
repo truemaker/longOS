@@ -104,7 +104,7 @@ __attribute__((interrupt)) void ssf_handler(interrupt_frame_t* int_frame) {
 
 __attribute__((interrupt)) void gpf_handler(interrupt_frame_t* int_frame) {
     asm("cli");
-    printf("A general protection fault has occured\n\rCS: %h\n\rRIP: %h\n\r",int_frame->cs,int_frame->rip);
+    printf("A general protection fault has occured\n\rCS: %h\n\rRIP: %h\n\rRSP: %h\n\r",int_frame->cs,int_frame->rip,int_frame->rsp >> 32);
     trace(10,(struct stackframe*)__builtin_frame_address(0));
     print("Readable Message: ");
     if (int_frame->err_code == 0) print("Not Segment Related");

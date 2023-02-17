@@ -63,6 +63,16 @@ namespace heap {
         expand_heap(size+sizeof(heap_seg_header_t));
         return malloc(size);
     }
+
+    void* calloc(size_t size,uint8_t val) {
+        void* ptr = malloc(size);
+        if (size % 0x10 > 0) {
+            size -= size%0x10;
+            size += 0x10;
+        }
+        memset(ptr,val,size);
+        return ptr;
+    }
     
     heap_seg_header_t* heap_seg_header_t::split(size_t size) {
         debugf("Attempt split to size %x bytes\n\r",size);

@@ -386,28 +386,5 @@ EnableSSE:
     mov cr4, rax
     ret
 
-[global walk_stack]
-walk_stack:
-    push rbp
-    mov rbp, rsp
-    mov rbx, [rbp + 8] ; Old rbp
-    mov rdi, [rbp + 16] ; arg 1
-    mov rdx, [rbp + 20] ; arg 2
-    xor rax, rax
-.loop:
-    test rbx, rbx
-    jz .done
-    mov rcx, [rbx + 8]
-    mov rbx, [rbx]
-    mov [rdi], rcx
-    add rdi, 8
-    inc rax
-    cmp rax, rdx
-    jl .loop
-.done:
-    mov rsp, rbp
-    pop rbp
-    ret
-
 [global end_extboot]
 end_extboot: dq $

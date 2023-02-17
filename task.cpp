@@ -51,7 +51,7 @@ void _create_task(proc_t* proc, void* entry) {
     proc->rsp = (uint64_t)request_page();
     g_PTM->map((void*)proc->rsp,(void*)proc->rsp);
     debugf("Creating task stack\n\r");
-    proc->rsp = _create_task_stack(proc->rsp+0x1000-8,(uint64_t)g_PTM->pml4,(uint64_t)entry);
+    proc->rsp = _create_task_stack(proc->rsp+0x1000-8,(uint64_t)g_PTM->pml4,(uint64_t)entry)+8;
     debugf("Created task stack\n\r");
     debugf("Creating task cr3\n\r");
     proc->cr3 = read_cr3();
@@ -76,6 +76,7 @@ void init_task() {
     main_proc.state = proc_running;
     task_switch_in_progress = false;
     current = &main_proc;
+    yield();
 }
 
 void yield() {
@@ -95,7 +96,7 @@ void switch_task() {
         last->state = proc_idle;
         current->state = proc_running;
         debugf("Initiating switch\n\r");
-        _task_switch(&last->rsp,current->rsp);
+        _task_switch(&last->rsp,&current->rsp);
         debugf("Switch done\n\r");
     }
     task_switch_in_progress = false;

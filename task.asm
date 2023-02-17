@@ -1,3 +1,4 @@
+[bits 64]
 _task_switch:
     push rbp
     mov rbp, rsp
@@ -13,14 +14,11 @@ _task_switch:
     push r11
     pushfq
     
-    mov rax, [rbp+24]  ; Load argument 'current_rsp'
-    mov [rax], rsp    ; Save 'rsp'
-    ;
-    mov rax, [rbp+16] ; Load argument 'new_task_rsp'
-    mov rsp, rax    ; Load 'rsp'
+    mov rdx, rdi        ; Load argument 'current_rsp'
+    mov [rdx], rsp      ; Save 'rsp'
     
-    ;mov rbx, [rax+8]  ; Load 'cr3'
-    ;mov cr3, rbx      ; Apply 'cr3'
+    mov rdx, rsi        ; Load argument 'new_task_rsp'
+    mov rsp, [rdx]      ; Load 'rsp'
     
     popfq
     pop r11
