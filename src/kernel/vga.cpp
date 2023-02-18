@@ -471,3 +471,11 @@ void disable_cursor() {
     outb(0x3D4, 0x0A);
 	outb(0x3D5, 0x20);
 }
+
+void clear_line() {
+    uint8_t* line = (uint8_t*)(VGA_MEM+align_to_start(vga_pos,VGA_WIDTH)*2);
+    for (uint64_t i = 0; i < VGA_WIDTH; i++) {
+        *(line+i*2) = 0;
+    }
+    set_cursor_pos(align_to_start(vga_pos,VGA_WIDTH));
+}
