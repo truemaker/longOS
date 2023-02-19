@@ -1,16 +1,6 @@
 ; 16 bit bootloader
 [org 0x7c00]
 [bits 16]
-jmp short start
-nop
-fsh_vid: db "longOS  "
-fsh_rds: db 1
-fsh_spb: dw 8
-fsh_total_blocks: dw 359
-fsh_free_blocks: dw 350
-fsh_magic: db 0x42, 0x69, 0x11, 0x11
-fsh_reserved_sectors: db 1
-
 start:
 mov [BOOT_DISK], dl
 
@@ -87,27 +77,3 @@ buffer: db "BlubBlah!",0
 
 times 510-($-$$) db 0
 dw 0xaa55
-root_dir:
-kernel_name: db "OS   BIN"  ; 8 bytes
-dw 0                        ; 2 bytes
-dw 0                        ; 2 bytes
-db 0x89,0                   ; 2 bytes
-kernel_pos: db 0,0          ; 2 bytes
-
-db "FONT RVF"               ; 8 bytes
-dw 0                        ; 2 bytes
-dw 0                        ; 2 bytes
-db 0x89, 0                  ; 2 bytes
-db 0,1                      ; 2 byte
-times 0x1200-($-$$) db 0
-extends:
-db 0,0
-db 0
-db 120
-dw 0xffff
-
-db 0,100
-db 0
-db 1
-dw 0xffff
-times 0x2200-($-$$) db 0

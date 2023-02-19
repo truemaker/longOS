@@ -7,7 +7,6 @@
 #include <serial.h>
 #include <disk.h>
 #include <io.h>
-#include <cfs.h>
 #include <heap.h>
 #include <font.h>
 #include <acpi.h>
@@ -76,7 +75,7 @@ ptm_t init_paging() {
     return pm;
 }
 
-CFS::cfs_t init_disk() {
+void init_disk() {
     print("Init disk...\n\r");
 
     device_t dev0 = device_t(0x1f0,0x3F6,0xA0,"Disk 1");
@@ -94,10 +93,6 @@ CFS::cfs_t init_disk() {
     read_disk(&dev0,(uint8_t*)buffer0,0,1);
     mbr_t* mbr = (mbr_t*)(&buffer0[0xDB]);
     print_mbr(mbr);
-
-    CFS::cfs_t cfs = CFS::cfs_t(mbr->partition0,&dev0, g_PTM);
-    cfs.list_files();
-    return cfs;
 }
 
 namespace VGASELECT {
@@ -271,12 +266,7 @@ extern "C" void main() {
         for (;;);
     }
     
-    //CFS::cfs_t fs = init_disk();
-    //print("Reading font.rvf\n\r");
-    //if (!fs.read_file(1,(uint8_t*)buffer1,0)) for (;;);
-    //print("Read font.rvf\n\r");
-    //write_font((uint8_t*)font::parse_font((uint8_t*)buffer1),16);
-    //for (;;);
+    init_disk();
 
     ACPI::fadt_t* fadt = (ACPI::fadt_t*)ACPI::get_table("FACP");
     print("Preffered Power Management Mode: ");

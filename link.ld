@@ -15,7 +15,6 @@ INPUT (
     build/kernel/task.o
     build/kernel/serial.o
     build/kernel/disk.o
-    build/kernel/cfs.o
     build/kernel/heap.o
     build/kernel/font.o
     build/kernel/acpi.o

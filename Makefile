@@ -34,7 +34,6 @@ build: prepare
 	$(GPP) $(KERNEL_ARGS64) "$(SRC_KERNEL)/task.cpp" -o "$(BUILD_KERNEL)/task.o"
 	$(GPP) $(KERNEL_ARGS64) "$(SRC_KERNEL)/serial.cpp" -o "$(BUILD_KERNEL)/serial.o"
 	$(GPP) $(KERNEL_ARGS64) "$(SRC_KERNEL)/disk.cpp" -o "$(BUILD_KERNEL)/disk.o"
-	$(GPP) $(KERNEL_ARGS64) "$(SRC_KERNEL)/cfs.cpp" -o "$(BUILD_KERNEL)/cfs.o"
 	$(GPP) $(KERNEL_ARGS64) "$(SRC_KERNEL)/heap.cpp" -o "$(BUILD_KERNEL)/heap.o"
 	$(GPP) $(KERNEL_ARGS64) "$(SRC_KERNEL)/font.cpp" -o "$(BUILD_KERNEL)/font.o"
 	$(GPP) $(KERNEL_ARGS64) "$(SRC_KERNEL)/acpi.cpp" -o "$(BUILD_KERNEL)/acpi.o"
