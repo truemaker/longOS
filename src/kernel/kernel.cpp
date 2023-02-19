@@ -274,7 +274,6 @@ extern "C" void main() {
     read_disk(&disk,ustar_buffer,2,1);
     USTAR::ustar_t fs = USTAR::ustar_t(ustar_buffer);
     fs.list_files();
-    for (;;);
 
     ACPI::fadt_t* fadt = (ACPI::fadt_t*)ACPI::get_table("FACP");
     print("Preffered Power Management Mode: ");
