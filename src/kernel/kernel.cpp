@@ -75,7 +75,7 @@ ptm_t init_paging() {
     return pm;
 }
 
-void init_disk() {
+device_t init_disk() {
     print("Init disk...\n\r");
 
     device_t dev0 = device_t(0x1f0,0x3F6,0xA0,"Disk 1");
@@ -93,6 +93,8 @@ void init_disk() {
     read_disk(&dev0,(uint8_t*)buffer0,0,1);
     mbr_t* mbr = (mbr_t*)(&buffer0[0xDB]);
     print_mbr(mbr);
+
+    return dev0;
 }
 
 namespace VGASELECT {
@@ -266,7 +268,7 @@ extern "C" void main() {
         for (;;);
     }
     
-    init_disk();
+    device_t disk = init_disk();
 
     ACPI::fadt_t* fadt = (ACPI::fadt_t*)ACPI::get_table("FACP");
     print("Preffered Power Management Mode: ");
