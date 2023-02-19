@@ -28,15 +28,22 @@ namespace CFS {
     
     typedef struct file_entry {
         char name[8];
+        uint16_t user;
+        uint16_t group;
         uint16_t flags;
         uint8_t pos_lo;
-        uint8_t pos_mid;
         uint8_t pos_hi;
-        uint8_t size_lo;
-        uint8_t size_mid;
-        uint8_t size_hi;
     } file_entry_t __attribute__((packed));
     
+    typedef struct extend {
+        uint8_t block_hi;
+        uint8_t block_lo;
+        uint8_t sector;
+        uint8_t size;
+        uint8_t next_hi;
+        uint8_t next_lo;
+    } extend_t __attribute__((packed));
+
     typedef struct cfs {
         header_t header;
         file_entry_t* files;
