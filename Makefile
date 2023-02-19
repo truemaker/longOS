@@ -41,6 +41,7 @@ build: prepare
 	$(GPP) $(KERNEL_ARGS64) "$(SRC_KERNEL)/io/pci.cpp" -o "$(BUILD_KERNEL)/pci.o"
 	$(GPP) $(KERNEL_ARGS64) "$(SRC_KERNEL)/io/sound.cpp" -o "$(BUILD_KERNEL)/sound.o"
 	$(GPP) $(KERNEL_ARGS64) "$(SRC_KERNEL)/memory/gdt.cpp" -o "$(BUILD_KERNEL)/gdt.o"
+	$(GPP) $(KERNEL_ARGS64) "$(SRC_KERNEL)/fs/ustar.cpp" -o "$(BUILD_KERNEL)/ustar.o"
 	$(LD) -T "link.ld" -Map memory.map
 	tar --create -H ustar --file $(BUILD)/kernel.tar -C $(BUILD_KERNEL) kernel.bin
 	cat $(BUILD_BOOT)/mbr.bin $(BUILD_BOOT)/boot.bin $(BUILD)/kernel.tar > $(BUILD)/OS.bin

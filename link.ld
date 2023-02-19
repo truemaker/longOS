@@ -22,6 +22,7 @@ INPUT (
     build/kernel/pci.o
     build/kernel/sound.o
     build/kernel/gdt.o
+    build/kernel/ustar.o
 )
 
 OUTPUT (

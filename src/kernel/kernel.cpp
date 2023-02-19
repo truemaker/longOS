@@ -17,6 +17,7 @@
 #include <defines.h>
 #include <gdt.h>
 #include <task.h>
+#include <ustar.h>
 
 ptm_t* g_PTM = NULL;
 extern uint64_t _stack;
@@ -269,6 +270,11 @@ extern "C" void main() {
     }
     
     device_t disk = init_disk();
+    uint8_t* ustar_buffer = (uint8_t*)heap::calloc(512,0);
+    read_disk(&disk,ustar_buffer,2,1);
+    USTAR::ustar_t fs = USTAR::ustar_t(ustar_buffer);
+    fs.list_files();
+    for (;;);
 
     ACPI::fadt_t* fadt = (ACPI::fadt_t*)ACPI::get_table("FACP");
     print("Preffered Power Management Mode: ");

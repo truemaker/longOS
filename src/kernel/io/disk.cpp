@@ -52,9 +52,10 @@ void reset_device(device_t* dev) {
     print("Resetting drive...\n\r");
     uint8_t dctl = inb(dev->dev_ctl);
     outb(dev->dev_ctl, dctl | 4);
-    dctl = inb(dev->dev_ctl);
+    PIT::sleep(10);
     dctl &= ~4;
     outb(dev->dev_ctl, dctl);
+    PIT::sleep(10);
 }
 
 void print_device(device_t* dev) {
