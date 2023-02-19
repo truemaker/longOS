@@ -15,7 +15,7 @@ namespace ACPI {
         return (sum % 0x100) == 0;
     }
     
-    void init_acpi() {
+    void init_acpi(void) {
         print("Initializing ACPI\n\r");
         RSDP_t *rsdp = get_rsdp();
         if (!rsdp) { print("Could not find RSDP"); asm("cli"); for (;;); }
@@ -138,7 +138,7 @@ namespace ACPI {
         return rsdp->revision == 2;
     }
 
-    RSDP_t* get_rsdp() {
+    RSDP_t* get_rsdp(void) {
         RSDP_t *rsdp = (RSDP_t*)0;
         for (uint64_t i=0; i<8192*2; i++) {
             RSDP_t *new_rsdp = (RSDP_t*)(0x80000 + 0x10 * i);
@@ -155,7 +155,7 @@ namespace ACPI {
         return rsdp;
     }
 
-    void* get_s5() {
+    void* get_s5(void) {
         fadt_t* fadt = (fadt_t*)get_table("FACP");
         sdt_header_t* dsdt = (sdt_header_t*)fadt->dsdt;
         if (!memcmp(dsdt->signature,(void*)"DSDT",4)) { print("Invalid DSDT.\n\r"); asm("cli"); for (;;); }
@@ -175,7 +175,7 @@ namespace ACPI {
         return 0;
     }
 
-    uint16_t get_typa() {
+    uint16_t get_typa(void) {
         char* s5 = (char*)get_s5();
         if (!((s5[-1]==0x08) || ((s5[-2] == 0x08) && (s5[-1] == '\\'))  && (s5[4] == 0x12))) { print("\\_S5_ parse error."); asm("cli"); for (;;); }
         s5 += 5;
@@ -184,7 +184,7 @@ namespace ACPI {
         return *s5  << 10;
     }
 
-    uint16_t get_typb() {
+    uint16_t get_typb(void) {
         char* s5 = (char*)get_s5();
         if (!((s5[-1]==0x08) || ((s5[-2] == 0x08) && (s5[-1] == '\\')) && (s5[4] == 0x12))) { print("\\_S5_ parse error."); asm("cli"); for (;;); }
         s5 += 5;
@@ -195,7 +195,7 @@ namespace ACPI {
         return *s5  << 10;
     }
 
-    void shutdown() {
+    void shutdown(void) {
         enable_acpi(); // Just to make sure
         fadt_t *fadt = (fadt_t*)get_table("FACP");
         uint16_t typa = get_typa();
@@ -207,7 +207,7 @@ namespace ACPI {
         if (fadt->pm1b_control_block != 0) outw(fadt->pm1b_control_block,get_typb() | (1<<13));
     }
 
-    void enable_acpi() {
+    void enable_acpi(void) {
         fadt_t *fadt = (fadt_t*)get_table("FACP");
         if ((inw(fadt->pm1a_control_block) & (1<<13)) == 0) {
             if (fadt->acpi_enable != 0 && fadt->smi_command_port != 0) {
@@ -279,7 +279,7 @@ namespace ACPI {
         if (memcmp(header->signature,(void*)"HPET",4)) print_hpet_table(header);
     }
 
-    void detect_hardware() {
+    void detect_hardware(void) {
         sdt_header_t* header = sdt;
         uint64_t entry_size = extended ? 8 : 4;
         uint64_t entries = (header->length - 36)/entry_size;

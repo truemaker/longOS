@@ -30,7 +30,7 @@ gdt_t default_gdt = {
     }, // user data segment
 };
 
-void init_gdt() {
+void init_gdt(void) {
     gdt_descriptor_t gdt_desc;
     gdt_desc.size = sizeof(gdt) - 1;
     gdt_desc.offset = (uint64_t)&default_gdt;

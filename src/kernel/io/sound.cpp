@@ -21,13 +21,13 @@ namespace PCSPK {
     }
     
     //make it shutup
-    void nosound() {
+    void nosound(void) {
     	uint8_t tmp = inb(0x61) & 0xFC;
     	outb(0x61, tmp);
     }
     
     //Make a beep
-    void beep() {
+    void beep(void) {
     	play_sound(1000);
     	PIT::sleep(20);
     	nosound();

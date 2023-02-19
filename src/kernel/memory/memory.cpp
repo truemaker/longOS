@@ -6,7 +6,7 @@ uint64_t free_mem = 0;
 uint64_t reserved_mem = 0;
 uint64_t used_mem = 0;
 bitmap_t memory_map;
-void print_memory() {
+void print_memory(void) {
     for (uint64_t i = 0; i < memory_region_count; i++) {
         mmap_entry_t* entry = (mmap_entry_t*)MEMORY_MAP;
         entry += i;
@@ -14,7 +14,7 @@ void print_memory() {
     }
 }
 
-uint64_t get_memory_size() {
+uint64_t get_memory_size(void) {
     uint64_t size = 0;
     mmap_entry_t* entry = (mmap_entry_t*)MEMORY_MAP;
     for (uint64_t i = 0; i < memory_region_count; i++) {
@@ -25,7 +25,7 @@ uint64_t get_memory_size() {
     return size;
 }
 
-uint64_t get_usable_memory_size() {
+uint64_t get_usable_memory_size(void) {
     uint64_t size = 0;
     for (uint32_t i = 0; i < memory_region_count; i++) {
         mmap_entry_t* entry = (mmap_entry_t*)MEMORY_MAP;
@@ -52,7 +52,7 @@ bool is_in_entry(mmap_entry_t* entry, void* addr) {
     return ((entry->size + entry->base) > ((uint64_t) addr)) && (((uint64_t) addr) > entry->base);
 }
 
-void convert_mmap_to_bmp() {
+void convert_mmap_to_bmp(void) {
     uint64_t pages = get_memory_size() / 0x1000;
     uint64_t bytes = pages / 8;
     printf("Memory bitmap is %x bytes and contains %x pages\n\r", bytes, pages);
@@ -75,7 +75,7 @@ void convert_mmap_to_bmp() {
     lock_page((void*)MEMORY_MAP); // Lock MMAP
 }
 
-void unlock_old_page_tables() {
+void unlock_old_page_tables(void) {
     free_pages((void*)&_end_all,7);
 }
 
@@ -166,7 +166,7 @@ void memcpy(void* dst, void* src, uint64_t count) {
     return;
 }
 
-void print_segments() {
+void print_segments(void) {
     const char* unit[] = {"Bytes", "KB", "MB", "GB"};
     uint8_t unitu = 0;
     uint8_t unitf = 0;
@@ -437,7 +437,7 @@ bool ptm_t::is_used(void* page) {
     return vmmap.get(index);
 }
 
-void* ptm_t::allocate_page() {
+void* ptm_t::allocate_page(void) {
     allocating = true;
     for (uint64_t i = 0; i<size; i++) {
         if (is_used((void*)(i*0x1000))) continue;

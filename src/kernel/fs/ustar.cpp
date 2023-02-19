@@ -27,7 +27,7 @@ namespace USTAR {
         }
     }
 
-    void ustar::list_files() {
+    void ustar::list_files(void) {
         for (uint64_t i = 0; i < MAX_FILES; i++) {
             file_entry_t* file = &this->files[i];
             if (file->name == "\0") break;

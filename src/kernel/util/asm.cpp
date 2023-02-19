@@ -56,7 +56,7 @@ void far_pokel(uint16_t sel, void* offset, uint32_t val) {
           : : "g"(sel), "r"(offset), "r"(val) );
 }
 
-bool are_interrupts_enabled() {
+bool are_interrupts_enabled(void) {
     unsigned long flags;
     asm volatile ( "pushf\n\t"
                    "pop %0"
@@ -64,7 +64,7 @@ bool are_interrupts_enabled() {
     return flags & (1 << 9);
 }
 
-uint64_t save_irqdisable() {
+uint64_t save_irqdisable(void) {
     unsigned long flags;
     asm volatile ("pushf\n\tcli\n\tpop %0" : "=r"(flags) : : "memory");
     return flags;
@@ -91,31 +91,31 @@ void cpuid(int code, uint32_t* a, uint32_t* d) {
     asm volatile ( "cpuid" : "=a"(*a), "=d"(*d) : "0"(code) : "ebx", "ecx" );
 }
 
-uint64_t rdtsc() {
+uint64_t rdtsc(void) {
     uint32_t low, high;
     asm volatile("rdtsc":"=a"(low),"=d"(high));
     return ((uint64_t)high << 32) | low;
 }
 
-uint64_t read_cr0() {
+uint64_t read_cr0(void) {
     uint64_t val;
     asm volatile( "mov %%cr0, %0" : "=r"(val) );
     return val;
 }
 
-uint64_t read_cr2() {
+uint64_t read_cr2(void) {
     uint64_t val;
     asm volatile( "mov %%cr2, %0" : "=r"(val) );
     return val;
 }
 
-uint64_t read_cr3() {
+uint64_t read_cr3(void) {
     uint64_t val;
     asm volatile( "mov %%cr3, %0" : "=r"(val) );
     return val;
 }
 
-uint64_t read_cr4() {
+uint64_t read_cr4(void) {
     uint64_t val;
     asm volatile( "mov %%cr4, %0" : "=r"(val) );
     return val;
@@ -145,6 +145,6 @@ uint64_t rdmsr(uint64_t msr) {
 	return ((uint64_t)high << 32) | low;
 }
 
-void reload_cr3() {
+void reload_cr3(void) {
     asm("mov %0, %%cr3" :: "r"(read_cr3()));
 }

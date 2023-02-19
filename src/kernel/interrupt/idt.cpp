@@ -9,7 +9,7 @@
 
 void(*main_keyboard_handler)(uint8_t scan_code);
 
-void pic_remap() {
+void pic_remap(void) {
     uint8_t a1,a2;
     a1 = inb(0x21);
     a2 = inb(0xA1);
@@ -35,7 +35,7 @@ void register_interrupt(uint64_t id, uint64_t addr) {
     _idt[id].types_attr = 0x8e;
 }
 
-void init_idt() {
+void init_idt(void) {
     register_interrupt(33, (uint64_t)&isr1);
     register_interrupt(0xe, (uint64_t)&pagef_handler);
     register_interrupt(0x8, (uint64_t)&doublef_handler);
@@ -49,7 +49,7 @@ void init_idt() {
     asm("sti");
 }
 
-extern "C" void isr1_handler() {
+extern "C" void isr1_handler(void) {
     uint8_t c = inb(0x60);
     if (main_keyboard_handler) main_keyboard_handler(c);
     outb(0x20,0x20);

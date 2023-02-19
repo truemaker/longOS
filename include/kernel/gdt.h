@@ -61,4 +61,4 @@ typedef enum
 extern gdt_t default_gdt;
 
 extern "C" void load_gdt(gdt_descriptor_t* gdt_descriptor);
-void init_gdt();
+void init_gdt(void);

@@ -46,7 +46,7 @@ namespace PCI {
         return tmp;
     }
 
-    void print_pci() {
+    void print_pci(void) {
         uint8_t function;
         uint8_t bus;
         uint16_t headerType = read_config_word(0, 0, 0, 0xC);

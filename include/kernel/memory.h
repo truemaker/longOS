@@ -50,7 +50,7 @@ typedef struct ptm {
     void unmap(void* vmem);
     void* get_paddr(void* vaddr);
     bool get_present(void* vaddr);
-    void* allocate_page();
+    void* allocate_page(void);
     void* allocate_pages(uint64_t);
     void mark_page_used(void*);
     void mark_page_unused(void*);
@@ -60,10 +60,10 @@ typedef struct ptm {
     bool is_used(void*);
 } ptm_t;
 
-void print_memory();
-uint64_t get_memory_size();
-uint64_t get_usable_memory_size();
-void convert_mmap_to_bmp();
+void print_memory(void);
+uint64_t get_memory_size(void);
+uint64_t get_usable_memory_size(void);
+void convert_mmap_to_bmp(void);
 void reserve_page(void*);
 void reserve_pages(void*,uint64_t);
 void lock_page(void*);
@@ -75,13 +75,13 @@ void free_pages(void*,uint64_t);
 void memset(void*,uint8_t,uint64_t);
 void memcpy(void*,void*,uint64_t);
 bool memcmp(void*,void*,uint64_t);
-void print_segments();
+void print_segments(void);
 void* request_page(bool map_page=false);
 void* request_pages(uint64_t,bool map_page=true);
 uint64_t align(uint64_t value, uint64_t alignment);
 uint64_t align_to_start(uint64_t value, uint64_t alignment);
 bool is_in_entry(mmap_entry_t* entry, void* addr);
-void unlock_old_page_tables();
+void unlock_old_page_tables(void);
 void* index2address(uint64_t pdp_i,uint64_t pd_i,uint64_t pt_i,uint64_t p_i);
 bool is_free(void*);
 

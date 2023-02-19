@@ -26,6 +26,6 @@ namespace USTAR {
     typedef struct ustar {
         file_entry_t files[MAX_FILES];
         ustar(uint8_t* buffer);
-        void list_files();
+        void list_files(void);
     } ustar_t;
 }

@@ -23,6 +23,8 @@ INPUT (
     build/kernel/sound.o
     build/kernel/gdt.o
     build/kernel/ustar.o
+    build/kernel/vfs.o
+    build/kernel/string.o
 )
 
 OUTPUT (

@@ -21,7 +21,7 @@ typedef struct proc {
     uint8_t current_quantum;
 } proc_t;
 extern "C" void _task_switch(uint64_t* current_rsp_store, uint64_t* new_task_rsp);
-void switch_task();
-void yield();
-void init_task();
+void switch_task(void);
+void yield(void);
+void init_task(void);
 proc_t* fork(void* entry);

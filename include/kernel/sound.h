@@ -3,6 +3,6 @@
 
 namespace PCSPK {
     void play_sound(uint32_t);
-    void nosound();
-    void beep();
+    void nosound(void);
+    void beep(void);
 }

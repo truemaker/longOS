@@ -1,6 +1,5 @@
 #pragma once
 #include <typedef.h>
-#include <stddef.h>
 
 namespace heap {
     typedef struct heap_seg_header {
@@ -8,8 +7,8 @@ namespace heap {
         heap_seg_header* next;
         heap_seg_header* prev;
         bool free;
-        void combine_forward();
-        void combine_backward();
+        void combine_forward(void);
+        void combine_backward(void);
         heap_seg_header* split(size_t size);
     } heap_seg_header_t;
 

@@ -6,13 +6,13 @@
 namespace PIT {
     uint16_t divisor = 65535;
     uint64_t millis_since_boot;
-    extern "C" void timer_handler() {
+    extern "C" void timer_handler(void) {
         millis_since_boot += 1;
         outb(0x20,0x20);
         outb(0xa0, 0x20);
     }
 
-    void init_timer() {
+    void init_timer(void) {
         register_interrupt(32, (uint64_t)&timer);
         set_frequency(1000);
         outb(0x21, inb(0x21) & ~0b00000001);
@@ -34,7 +34,7 @@ namespace PIT {
         outb(0x40, (uint8_t)((new_divisor & 0xff00) >> 8));
     }
 
-    uint64_t get_frequency() {
+    uint64_t get_frequency(void) {
         return base_frequency / divisor;
     }
 

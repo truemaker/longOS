@@ -155,7 +155,7 @@ void load_registers(uint8_t* regs) {
 	outb(GRAPHICS_AC_INDEX, 0x20);
 }
 
-void print_trans() {
+void print_trans(void) {
     load_registers(g_320x200x256);
     gclear(0);
     uint64_t offset = 135;
@@ -197,12 +197,12 @@ void set_mode(uint64_t wd, uint64_t ht) {
     w = wd; h = ht;
 }
 
-void init_vga() {
+void init_vga(void) {
     set_mode(90,30);
     clear();
 }
 
-void clear_down_row() {
+void clear_down_row(void) {
     memset(VGA_MEM+VGA_WIDTH*(VGA_HEIGHT-1)*2,attribute(FG_WHITE,BG_BLUE),VGA_WIDTH*2);
     for (uint64_t i = 0; i < VGA_WIDTH; i++) {
         *(VGA_MEM+VGA_WIDTH*(VGA_HEIGHT-1)*2+i*2) = 0;
@@ -459,7 +459,7 @@ void set_line_color(uint64_t line, uint8_t c, uint64_t start, uint64_t end) {
     }
 }
 
-void enable_cursor() {
+void enable_cursor(void) {
     outb(0x3D4, 0x0A);
 	outb(0x3D5, (inb(0x3D5) & 0xC0) | 0x0D);
  
@@ -467,12 +467,12 @@ void enable_cursor() {
 	outb(0x3D5, (inb(0x3D5) & 0xE0) | 0x0E);
 }
 
-void disable_cursor() {
+void disable_cursor(void) {
     outb(0x3D4, 0x0A);
 	outb(0x3D5, 0x20);
 }
 
-void clear_line() {
+void clear_line(void) {
     uint8_t* line = (uint8_t*)(VGA_MEM+align_to_start(vga_pos,VGA_WIDTH)*2);
     for (uint64_t i = 0; i < VGA_WIDTH; i++) {
         *(line+i*2) = 0;

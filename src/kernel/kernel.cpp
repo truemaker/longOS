@@ -18,13 +18,15 @@
 #include <gdt.h>
 #include <task.h>
 #include <ustar.h>
+#include <typedef.h>
+#include <vfs.h>
 
 ptm_t* g_PTM = NULL;
 extern uint64_t _stack;
 uint16_t buffer0[256];
 uint16_t buffer1[2048];
 
-bool test_heap() {
+bool test_heap(void) {
     void* a = heap::malloc(0x100);
     uint64_t aaddr = (uint64_t)a;
     void* b = heap::malloc(0x100);
@@ -47,7 +49,7 @@ bool test_heap() {
     return (eaddr==baddr) && (aaddr==faddr);
 }
 
-ptm_t init_paging() {
+ptm_t init_paging(void) {
     pt_t* pml4 = (pt_t*)request_page();
     memset(pml4, 0, 0x1000);
     ptm_t pm = ptm_t(pml4,get_memory_size()/0x1000);
@@ -76,7 +78,7 @@ ptm_t init_paging() {
     return pm;
 }
 
-device_t init_disk() {
+device_t init_disk(void) {
     print("Init disk...\n\r");
 
     device_t dev0 = device_t(0x1f0,0x3F6,0xA0,"Disk 1");
@@ -270,10 +272,9 @@ extern "C" void main() {
     }
     
     device_t disk = init_disk();
-    uint8_t* ustar_buffer = (uint8_t*)heap::calloc(512,0);
-    read_disk(&disk,ustar_buffer,2,1);
-    USTAR::ustar_t fs = USTAR::ustar_t(ustar_buffer);
-    fs.list_files();
+
+    VFS::install_vfs();
+    VFS::print_vfs();
 
     ACPI::fadt_t* fadt = (ACPI::fadt_t*)ACPI::get_table("FACP");
     print("Preffered Power Management Mode: ");

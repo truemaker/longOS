@@ -115,8 +115,8 @@ namespace ACPI {
         acpi_address_t x_gpe1_block;
     } __attribute__((packed)) fadt_t;
 
-    void init_acpi();
-    RSDP_t *get_rsdp();
+    void init_acpi(void);
+    RSDP_t *get_rsdp(void);
     bool check_rsdp(RSDP_t*);
     bool check_rsdp(RSDP20_t*);
     bool check_version(RSDP_t*);
@@ -126,7 +126,7 @@ namespace ACPI {
     sdt_header_t* get_table(char*);
     void print_sdt(sdt_header_t* header);
     void print_address(acpi_address_t);
-    void shutdown();
-    void enable_acpi();
-    void detect_hardware();
+    void shutdown(void);
+    void enable_acpi(void);
+    void detect_hardware(void);
 }

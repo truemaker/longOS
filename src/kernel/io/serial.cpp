@@ -2,7 +2,7 @@
 #include <serial.h>
 namespace serial {
 #define COM1 0x3f8
-   bool init_serial() {
+   bool init_serial(void) {
       outb(COM1 + 1, 0x00);
       outb(COM1 + 3, 0x80);
       outb(COM1 + 0, 0x03);
@@ -19,16 +19,16 @@ namespace serial {
       return 0;
    }
    
-   bool serial_received() {
+   bool serial_received(void) {
       return inb(COM1 + 5) & 1;
    }
    
-   char read_serial() {
+   char read_serial(void) {
       while (!serial_received());
       return inb(COM1);
    }
    
-   bool is_transmit_empty() {
+   bool is_transmit_empty(void) {
       return inb(COM1 + 5) & 0x20;
    }
    
