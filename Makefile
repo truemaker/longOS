@@ -42,7 +42,8 @@ build: prepare
 	$(GPP) $(KERNEL_ARGS64) "$(SRC_KERNEL)/sound.cpp" -o "$(BUILD_KERNEL)/sound.o"
 	$(GPP) $(KERNEL_ARGS64) "$(SRC_KERNEL)/gdt.cpp" -o "$(BUILD_KERNEL)/gdt.o"
 	$(LD) -T "link.ld" -Map memory.map
-	cat $(BUILD_BOOT)/mbr.bin $(BUILD_BOOT)/boot.bin $(BUILD_KERNEL)/kernel.bin > $(BUILD)/OS.bin
+	tar --create -H ustar --file $(BUILD)/kernel.tar -C $(BUILD_KERNEL) kernel.bin
+	cat $(BUILD_BOOT)/mbr.bin $(BUILD_BOOT)/boot.bin $(BUILD)/kernel.tar > $(BUILD)/OS.bin
 	dd if=/dev/zero of=image.img bs=512 count=2880 status=none
 	dd if=$(BUILD)/OS.bin of=image.img conv=notrunc status=none
 	dd if=$(BUILD_RES)/font.bin of=image.img conv=notrunc seek=409600 status=none
