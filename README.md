@@ -13,7 +13,7 @@
 - PCI
 - A VGASELECT screen
 - A little secret
-- File System
+- File System (USTAR)
 - MBR
 - PC Speaker
 - PIT
