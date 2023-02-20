@@ -3,19 +3,10 @@
 #include <memory.h>
 #include <vga.h>
 #include <vfs.h>
+#include <string.h>
+#include <errorcodes.h>
 
 namespace USTAR {
-    uint64_t oct2bin(uint8_t *str, int size) {
-        uint64_t n = 0;
-        uint8_t *c = str;
-        while (size-- > 0) {
-            n *= 8;
-            n += *c - '0';
-            c++;
-        }
-        return n;
-    }
-
     ustar::ustar(uint8_t* buffer) {
         memset(this->files,0,sizeof(this->files));
         void* addr = (void*)buffer;
@@ -39,6 +30,7 @@ namespace USTAR {
             file_entry_t* file = (file_entry_t*)buf;
             if (file->name[0] == '\0') break;
             memcpy(this->files+i,file,512);
+            this->files[i].lba = current_sector;
             uint64_t size = oct2bin((uint8_t*)file->size,11);
             current_sector += (((size + 511) / 512) + 1);
         }
@@ -47,7 +39,7 @@ namespace USTAR {
 
     void ustar::list_files(void) {
         for (uint64_t i = 0; i < MAX_FILES; i++) {
-            file_entry_t* file = &this->files[i];
+            file_entry_t* file = &this->files[i].entry;
             if (file->name[0] == '\0') break;
             print(file->name);
             print(" ");
@@ -68,6 +60,15 @@ namespace USTAR {
     }
 
     void ustar::mount(char* path) {
-        // TODO: Mount to vfs
+        printf("[USTAR] Mounting ustar to %s\n\r",path);
+        uint32_t err = VFS::vfs_mount(path,this,0x01);
+        if (err) { printf("[USTAR] Failed to mount to %s due to ",path);
+            switch (err) {
+                case EINVAL: print("EINVAL"); break;
+                case ERELATIVE: print("ERELATIVE"); break;
+                case EUSED: print("EUSED"); break;
+            }
+        }
+        print("\n\r");
     }
 }

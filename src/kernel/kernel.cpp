@@ -274,10 +274,8 @@ extern "C" void main() {
     device_t disk = init_disk();
 
     VFS::install_vfs();
-    VFS::print_vfs();
     USTAR::ustar_t tar = USTAR::ustar_t(&disk,2,1);
-    tar.list_files();
-    for (;;);
+    tar.mount("/boot/");
 
     ACPI::fadt_t* fadt = (ACPI::fadt_t*)ACPI::get_table("FACP");
     print("[ACPI] Preffered Power Management Mode: ");

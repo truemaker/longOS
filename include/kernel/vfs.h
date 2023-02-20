@@ -14,6 +14,8 @@
 #define FS_SYMLINK      0x20
 #define FS_MOUNTPOINT   0x40
 
+#define FS_IMPL_USTAR   0x01
+
 namespace VFS {
     struct fs_node;
 
@@ -26,8 +28,10 @@ namespace VFS {
         char name[256];
         void* device;           // If available
         uint64_t impl;          // Used FS
+        uint8_t type;
 
         // The following are only used if available
+        uint64_t position;
         uint64_t size;
         uint64_t atime;
         uint64_t mtime;
@@ -68,4 +72,5 @@ namespace VFS {
 
     void install_vfs(void);
     void print_vfs(void);
+    int vfs_mount(char*,void*,uint64_t);
 }
