@@ -2,6 +2,7 @@
 #include <heap.h>
 #include <typedef.h>
 #include <string.h>
+#include <vga.h>
 
 size_t strlen(const char * s) {
 	const char * a = s;
@@ -30,6 +31,7 @@ char * strdup(const char * c) {
 	memcpy(out, (void*)c, strlen(c)+1);
 	return out;
 }
+
 uint64_t oct2bin(uint8_t *str, int size) {
 	uint64_t n = 0;
     uint8_t *c = str;
@@ -39,4 +41,27 @@ uint64_t oct2bin(uint8_t *str, int size) {
         c++;
     }
     return n;
+}
+
+uint16_t udigits(uint64_t i, uint64_t base) {
+	uint64_t v = i;
+	uint16_t d = 0;
+	while (v) {
+		v /= base;
+		d++;
+	}
+	return d;
+} 
+
+char* uitos(uint64_t i, uint64_t base) {
+	if (base > 10) { print("[STRING] base > 10 is not supported yet\n\r"); return 0; }
+	if (base == 1) { print("[STRING] base == 1 is illegal\n\r"); return 0; }
+	uint64_t d = udigits(i,base);
+	char* s = (char*)heap::malloc(d);
+	uint64_t v = i;
+	for (uint16_t j = 0; j < d; j++) {
+		s[d-j+1] = (v % base)+'0';
+		v /= base;
+	}
+	return s;
 }
