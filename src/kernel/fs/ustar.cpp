@@ -2,6 +2,7 @@
 #include <heap.h>
 #include <memory.h>
 #include <vga.h>
+#include <vfs.h>
 
 namespace USTAR {
     uint64_t oct2bin(uint8_t *str, int size) {
@@ -27,10 +28,27 @@ namespace USTAR {
         }
     }
 
+    ustar::ustar(device_t* dev, uint64_t start, uint64_t length) {
+        memset(this->files,0,sizeof(this->files));
+        if (!length) return;
+        uint64_t current_sector = start;
+        void* buf = (void*)heap::malloc(512);
+        for (uint64_t i = 0; i < MAX_FILES; i++) {
+            if (current_sector >= start+length) break;
+            read_disk(dev,(uint8_t*)buf,current_sector,1);
+            file_entry_t* file = (file_entry_t*)buf;
+            if (file->name[0] == '\0') break;
+            memcpy(this->files+i,file,512);
+            uint64_t size = oct2bin((uint8_t*)file->size,11);
+            current_sector += (((size + 511) / 512) + 1);
+        }
+        delete buf;
+    }
+
     void ustar::list_files(void) {
         for (uint64_t i = 0; i < MAX_FILES; i++) {
             file_entry_t* file = &this->files[i];
-            if (file->name == "\0") break;
+            if (file->name[0] == '\0') break;
             print(file->name);
             print(" ");
             switch (file->typeflag) {
@@ -47,5 +65,9 @@ namespace USTAR {
             print(file->username);
             print("\n\r");
         }
+    }
+
+    void ustar::mount(char* path) {
+        // TODO: Mount to vfs
     }
 }

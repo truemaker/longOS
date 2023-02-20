@@ -275,6 +275,9 @@ extern "C" void main() {
 
     VFS::install_vfs();
     VFS::print_vfs();
+    USTAR::ustar_t tar = USTAR::ustar_t(&disk,2,1);
+    tar.list_files();
+    for (;;);
 
     ACPI::fadt_t* fadt = (ACPI::fadt_t*)ACPI::get_table("FACP");
     print("Preffered Power Management Mode: ");

@@ -1,7 +1,8 @@
 #pragma once
 #include <typedef.h>
+#include <disk.h>
 
-#define MAX_FILES 1
+#define MAX_FILES 32
 
 namespace USTAR {
     typedef struct file_entry {
@@ -25,7 +26,9 @@ namespace USTAR {
 
     typedef struct ustar {
         file_entry_t files[MAX_FILES];
-        ustar(uint8_t* buffer);
+        ustar(uint8_t*);
+        ustar(device_t*,uint64_t,uint64_t);
         void list_files(void);
+        void mount(char*);
     } ustar_t;
 }
