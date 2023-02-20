@@ -5,7 +5,6 @@
 - Serial port
 - VGA Text mode
 - Interrupts
-- An empty task.c
 - A bitmap library
 - A Stack trace function
 - A Disk driver
