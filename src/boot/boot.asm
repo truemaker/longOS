@@ -18,9 +18,8 @@ int 0x10
 mov si, msg_hello
 call print
 
-;call read_tar
-;call parse_tar
-call read_disk
+call read_tar
+call parse_tar
 
 mov si, msg_done
 call print
@@ -108,6 +107,7 @@ parse_tar:
     push bx
     call get_size
     pop bx
+    mov bx, 1
     call read_kernel
 .end:
     ret
@@ -124,6 +124,8 @@ memcpy:
     ret
 
 memcmp:
+    push bx
+    push dx
 .cmp_loop:
     mov dx, [si]
     mov bx, [di]
@@ -134,9 +136,13 @@ memcmp:
     dec cx
     cmp cx, 0
     jne .cmp_loop
+    pop dx
+    pop bx
     mov ax, 1
     ret
 .fail:
+    pop dx
+    pop bx
     mov ax, 0
     ret
 
@@ -157,14 +163,9 @@ print:
 read_kernel:
     mov cx, bx
     add cx, 0x03
-    
-    push ax
-    mov ax, 0x800
-    mov es, ax
-    pop ax
     mov al, 124
     
-    mov bx, 0
+    mov bx, 0x8000
     mov dh, 0
     mov ah, 0x02
     mov ch, 0
@@ -173,18 +174,6 @@ read_kernel:
     jc disk_error
     xor ax,ax
     mov es, ax
-    ret
-
-read_disk:
-    mov bx, 0x8000
-    mov ah, 0x02
-    mov al, 128
-    mov ch, 0x00
-    mov dh, 0x00
-    mov cl, 0x04
-    mov dl, [BOOT_DISK]
-    int 0x13
-    jc disk_error
     ret
 
 disk_error:
