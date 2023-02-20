@@ -65,3 +65,15 @@ char* uitos(uint64_t i, uint64_t base) {
 	}
 	return s;
 }
+
+char* strcat(char* a, char* b) {
+	char* s = (char*)heap::malloc(strlen(a)+strlen(b));
+	strcpy(s,a);
+	strcpy(s+strlen(a),b);
+	return s;
+}
+
+void strcpy(char* a, char* b) {
+	uint64_t l = strlen(a) > strlen(b) ? strlen(b) : strlen(a);
+	memcpy(a,b,l);
+}
