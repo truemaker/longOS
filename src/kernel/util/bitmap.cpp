@@ -6,23 +6,19 @@ bool bitmap_t::operator[](uint64_t index) {
 
 bool bitmap_t::get(uint64_t index) {
     debugf("Getting %x\n\r",index);
-    if (index > size) {printf("[BITMAP] Bitmap Access error: read\n\r%t"); asm("cli"); for (;;); return false;}
-    uint64_t idx4baligned = index / 32;
-    uint64_t idxin4b = index % 32;
-    uint32_t b = bytes[idx4baligned];
-    uint32_t mask = (0b10000000000000000000000000000000 >> idxin4b);
-    if (b & mask) return true;
+    if (index > size * 8) {printf("[BITMAP] Bitmap out of bounds: %x\n\r",index); return false;}
+    uint64_t byte_index = index / 8;
+    uint8_t bit_index = index % 8;
+    uint8_t bit_indexer = 0b10000000 >> bit_index;
+    if (bytes[byte_index]&bit_indexer) return true;
     return false;
 }
 
 void bitmap_t::set(uint64_t index, bool value) {
     debugf("Setting %x\n\r",index);
-    if (index > size) {printf("[BITMAP] Bitmap Access error: write\n\r%t"); asm("cli"); for (;;); return;}
-    uint64_t idx4baligned = index / 32;
-    uint64_t idxin4b = index % 32;
-    uint32_t b = bytes[idx4baligned];
-    uint32_t mask = (0b10000000000000000000000000000000 >> idxin4b);
-    b &= ~mask;
-    if (value) b |= mask;
-    bytes[idx4baligned] = b;
+    if (index > size * 8) {printf("[BITMAP] Bitmap out of bounds: %x\n\r",index); return;}
+    uint64_t byte_index = index / 8;
+    uint8_t bit_index = index % 8;
+    uint8_t bit_indexer = 0b10000000 >> bit_index;
+    bytes[byte_index] |= bit_indexer;
 }

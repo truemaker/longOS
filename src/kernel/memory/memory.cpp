@@ -5,6 +5,10 @@
 uint64_t free_mem = 0;
 uint64_t reserved_mem = 0;
 uint64_t used_mem = 0;
+uint64_t total_memory = 0;
+uint64_t usable_memory = 0;
+bool scanned_total = false;
+bool scanned_usable = false;
 bitmap_t memory_map;
 void print_memory(void) {
     for (uint64_t i = 0; i < memory_region_count; i++) {
@@ -15,6 +19,7 @@ void print_memory(void) {
 }
 
 uint64_t get_memory_size(void) {
+    if (scanned_total) return total_memory;
     uint64_t size = 0;
     mmap_entry_t* entry = (mmap_entry_t*)MEMORY_MAP;
     for (uint64_t i = 0; i < memory_region_count; i++) {
@@ -22,17 +27,22 @@ uint64_t get_memory_size(void) {
         size += entry->size;
         entry++;
     }
-    return size;
+    total_memory = size;
+    scanned_total = true;
+    return total_memory;
 }
 
 uint64_t get_usable_memory_size(void) {
+    if (scanned_usable) return usable_memory;
     uint64_t size = 0;
     for (uint32_t i = 0; i < memory_region_count; i++) {
         mmap_entry_t* entry = (mmap_entry_t*)MEMORY_MAP;
         entry += i;
         if (entry->type == 1) size += entry->size;
     }
-    return size;
+    usable_memory = size;
+    scanned_usable = true;
+    return usable_memory;
 }
 
 bool is_free(void* addr) {
@@ -53,14 +63,16 @@ bool is_in_entry(mmap_entry_t* entry, void* addr) {
 }
 
 void convert_mmap_to_bmp(void) {
-    uint64_t pages = get_memory_size() / 0x1000;
-    uint64_t bytes = pages / 8;
+    uint64_t pages = (get_memory_size() & ~0xfff) >> 12;
+    uint64_t bytes = pages >> 3;
     printf("[MEMORY] Bitmap is %x bytes and contains %x pages\n\r", bytes, pages);
     memory_map = bitmap_t();
-    memory_map.size = pages+1;
+    memory_map.size = (pages+1) / 8;
     memory_map.bytes = _mmap;
     memset(_mmap,0,0x4000);
     free_mem = get_memory_size();
+    used_mem = 0;
+    reserved_mem = 0;
     for (uint64_t i = 0; i < pages; i++) {
         bool free;
         for (uint64_t e = 0; e < memory_region_count; e++) {
@@ -189,25 +201,17 @@ void print_segments(void) {
     printf("[MEMORY] Used: %x %s\n\r[MEMORY] Free: %x %s\n\r[MEMORY] Reserved: %x %s\n\r", displayu, unit[unitu], displayf, unit[unitf], displayr, unit[unitr]);
 }
 
-void* request_page(bool map_page) {
-    debugf("[MEMORY] Requested new page\n\r");
-    uint64_t addr = 0;
-    uint64_t mem_size = align_to_start(get_memory_size(),0x1000);
-    debugf("[MEMORY] Mem Size: %h\n\r",mem_size);
-    while (addr<mem_size) {
-        debugf("[MEMORY] Checking %h\n\r",addr);
-        if (!memory_map.get(addr/0x1000)) break;
-        debugf("[MEMORY] Checked %h\n\r",addr);
-        addr += 0x1000;
+uint64_t page_bitmap_index = 0;
+void* request_page() {
+    for (; page_bitmap_index < memory_map.size * 8; page_bitmap_index++){
+        if (memory_map[page_bitmap_index] == true) continue;
+        lock_page((void*)(page_bitmap_index * 4096));
+        return (void*)(page_bitmap_index * 4096);
     }
-    if (!(addr < (align_to_start(get_memory_size(),0x1000)))) { print("[MEMORY] Out of memory: Single page"); for (;;); return 0; }
-    if (addr > get_memory_size()) { print("[MEMORY] Something went wrong while allocating"); for(;;); return 0; }
-    lock_page((void*)addr);
-    debugf("Found page %h\n\r", addr);
-    return (void*)addr;
+    return NULL; // Page Frame Swap to file
 }
 
-void* request_pages(uint64_t count,bool map_page) {
+void* request_pages(uint64_t count) {
     debugf("Requested new pages\n\r");
     uint64_t i = 0;
     uint64_t pages = 0;
@@ -249,8 +253,8 @@ page_index::page_index(uint64_t addr) {
 ptm_t::ptm(pt_t* pml4In, uint64_t page_count) {
     pml4 = pml4In;
     vmmap = bitmap_t();
-    vmmap.size = page_count + 1;
-    vmmap.bytes = (uint32_t*)request_pages((page_count / 0x1000 / 8 + 1));
+    vmmap.size = (page_count + 1)/8;
+    vmmap.bytes = (uint8_t*)request_pages((page_count / 0x1000 / 8 + 1));
     memset(vmmap.bytes,0,(page_count / 0x1000 / 8 + 1)*0x1000);
     size = page_count;
 }

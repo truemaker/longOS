@@ -60,7 +60,7 @@ namespace heap {
             if (seg->next == NULL) break;
             seg = seg->next;
         }
-        expand_heap(size+sizeof(heap_seg_header_t));
+        expand_heap((size+sizeof(heap_seg_header_t))*2);
         return malloc(size);
     }
 
@@ -101,7 +101,7 @@ namespace heap {
         heap_seg_header_t* new_seg = (heap_seg_header_t*)heap_end;
         for (size_t i = 0; i < pages; i++) {
             g_PTM->mark_page_used(heap_end);
-            g_PTM->map(heap_end,request_page(false));
+            g_PTM->map(heap_end,request_page());
             heap_end = (void*)((size_t)heap_end+0x1000);
         }
         new_seg->free = true;

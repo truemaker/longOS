@@ -165,15 +165,18 @@ read_kernel:
     add cx, 0x03
     mov al, 124
     
-    mov bx, 0x8000
+    push es
+    push 0x800
+    pop es
+
+    mov bx, 0
     mov dh, 0
     mov ah, 0x02
     mov ch, 0
     mov dl, [BOOT_DISK]
     int 0x13
     jc disk_error
-    xor ax,ax
-    mov es, ax
+    pop es
     ret
 
 disk_error:

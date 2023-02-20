@@ -1,6 +1,6 @@
 .SILENT:
 TARGET=x86_64
-KERNEL_ARGS=-I"include/kernel" -ffreestanding -nostdlib -mno-red-zone -Wno-write-strings -fno-permissive -Wno-attributes -Wno-int-to-pointer-cast -Wno-pointer-arith
+KERNEL_ARGS=-I"include/kernel" -ffreestanding -nostdlib -mno-red-zone -Wno-write-strings -fno-permissive -Wno-attributes -Wno-int-to-pointer-cast -Wno-pointer-arith -O0
 KERNEL_ARGS64=$(KERNEL_ARGS) -m64 -c
 SRC=src
 SRC_KERNEL=$(SRC)/kernel

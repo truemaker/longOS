@@ -58,7 +58,7 @@ ptm_t init_paging(void) {
     for (uint64_t i = 0; i < 0x200; i++) {
         pm.map((void*)(i*0x1000),(void*)(i*0x1000));
     }
-    print("[KERNEL] Identity mapped 512 pages at the start of memory\n\rLoading PML4...");
+    print("[KERNEL] Identity mapped 512 pages at the start of memory\n\r[KERNEL] Loading PML4...");
     asm("mov %0, %%cr3"::"r"(pml4));
     unlock_old_page_tables();
     print("done\n\r");
@@ -82,20 +82,9 @@ device_t init_disk(void) {
     print("[KERNEL] Init disk...\n\r");
 
     device_t dev0 = device_t(0x1f0,0x3F6,0xA0,"Disk 1");
-    init_disk(&dev0);
-
     device_t dev1 = device_t(0x1f0,0x3F6,0xB0,"Disk 2");
-    init_disk(&dev1);
-
     device_t dev2 = device_t(0x170,0x376,0xA0,"Disk 3");
-    init_disk(&dev2);
-
     device_t dev3 = device_t(0x170,0x376,0xB0,"Disk 4");
-    init_disk(&dev3);
-
-    read_disk(&dev0,(uint8_t*)buffer0,0,1);
-    mbr_t* mbr = (mbr_t*)(&buffer0[0xDB]);
-    print_mbr(mbr);
 
     return dev0;
 }

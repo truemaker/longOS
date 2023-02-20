@@ -58,8 +58,7 @@ extern "C" void isr1_handler(void) {
 
 __attribute__((interrupt)) void pagef_handler(interrupt_frame_t* int_frame) {
     asm("cli");
-    printf("A page fault has occured\n\rFault address: %h\n\rPML4: %h\n\rRIP: %h\n\r", read_cr2(), read_cr3(),int_frame->rip);
-    trace(10,(struct stackframe*)int_frame->rsp);
+    printf("A page fault has occured\n\rFault address: %h\n\rPML4: %h\n\rRIP: %h", read_cr2(), read_cr3(),int_frame->rip);
     print("\n\rReadable Message: ");
     uint64_t err = int_frame->err_code;
     if (err & 0x4) print("User");
@@ -78,6 +77,7 @@ __attribute__((interrupt)) void pagef_handler(interrupt_frame_t* int_frame) {
     else if ((1 << 5)&int_frame->err_code) print("protection-key");
     else print("bad programming");
     print("\n\r");
+    trace(10,(struct stackframe*)int_frame->rsp);
     for (;;);
     serial::write_serial("Pulsing Reset line.\n\r",21);
     uint8_t temp;
