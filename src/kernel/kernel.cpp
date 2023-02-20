@@ -54,11 +54,11 @@ ptm_t init_paging(void) {
     memset(pml4, 0, 0x1000);
     ptm_t pm = ptm_t(pml4,get_memory_size()/0x1000);
     g_PTM = &pm;
-    print("Created PTM and PML4\n\r");
+    print("[KERNEL] Created PTM and PML4\n\r");
     for (uint64_t i = 0; i < 0x200; i++) {
         pm.map((void*)(i*0x1000),(void*)(i*0x1000));
     }
-    print("Identity mapped 512 pages at the start of memory\n\rLoading PML4...");
+    print("[KERNEL] Identity mapped 512 pages at the start of memory\n\rLoading PML4...");
     asm("mov %0, %%cr3"::"r"(pml4));
     unlock_old_page_tables();
     print("done\n\r");
@@ -73,13 +73,13 @@ ptm_t init_paging(void) {
             }
         }
     }
-    print("Identity mapped everything\n\r");
+    print("[KERNEL] Identity mapped everything\n\r");
     asm("mov %0, %%cr3"::"r"(pml4));
     return pm;
 }
 
 device_t init_disk(void) {
-    print("Init disk...\n\r");
+    print("[KERNEL] Init disk...\n\r");
 
     device_t dev0 = device_t(0x1f0,0x3F6,0xA0,"Disk 1");
     init_disk(&dev0);
@@ -250,7 +250,7 @@ extern "C" void main() {
 #endif
 
     if (serial::init_serial()) {
-        printf("Failed to init serial");
+        printf("[SERIAL] Failed to init serial");
         return;
     }
     serial::write_serial("Just passing by.\n\r",18);
@@ -266,7 +266,7 @@ extern "C" void main() {
     heap::init_heap((void*)0x0000100000000000,0x10);
 
     if (!test_heap()) {
-        print("HEAP: Test failed!");
+        print("[HEAP] Test failed!");
         asm("cli");
         for (;;);
     }
@@ -280,7 +280,7 @@ extern "C" void main() {
     for (;;);
 
     ACPI::fadt_t* fadt = (ACPI::fadt_t*)ACPI::get_table("FACP");
-    print("Preffered Power Management Mode: ");
+    print("[ACPI] Preffered Power Management Mode: ");
     switch (fadt->preferred_power_management_profile) {
         case 0:
             print("Unspecified");
@@ -295,7 +295,7 @@ extern "C" void main() {
     fork((void*)taskA);
     fork((void*)taskB);
     yield();
-    print("Hello from kernel\n\r");
+    print("[KERNEL] Hello from kernel\n\r");
     while (1) {
         uint64_t time = PIT::millis_since_boot;
         clear_line();

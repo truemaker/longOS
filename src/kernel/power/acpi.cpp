@@ -16,31 +16,31 @@ namespace ACPI {
     }
     
     void init_acpi(void) {
-        print("Initializing ACPI\n\r");
+        print("[ACPI] Initializing ACPI\n\r");
         RSDP_t *rsdp = get_rsdp();
-        if (!rsdp) { print("Could not find RSDP"); asm("cli"); for (;;); }
-        if (!check_rsdp(rsdp)) { print("Invalid RSDP"); asm("cli"); for (;;); }
+        if (!rsdp) { print("[ACPI] Could not find RSDP"); asm("cli"); for (;;); }
+        if (!check_rsdp(rsdp)) { print("[ACPI] Invalid RSDP"); asm("cli"); for (;;); }
         debugf("Revision: %x\n\rChecksum: %x\n\rOEM: %c%c%c%c%c%c\n\r", rsdp->revision, rsdp->checksum, rsdp->oemid[0], rsdp->oemid[1], rsdp->oemid[2], rsdp->oemid[3], rsdp->oemid[4], rsdp->oemid[5]);
         if (!check_version(rsdp)) {
-            print("Loading RSDT...");
+            print("[ACPI] Loading RSDT...");
             sdt = (sdt_header_t*)rsdp->rsdt;
             if (!g_PTM->get_present(sdt)) g_PTM->map(sdt,sdt);
             print("Done\n\r");
             if (!validate_sdt(sdt)) { print("Invalid RSDT."); asm("cli"); for(;;); }
             return;
         }
-        print("ACPI >= 2.0 supported\n\r");
+        print("[ACPI] ACPI >= 2.0 supported\n\r");
         RSDP20_t *rsdp20 = (RSDP20_t*)rsdp;
         extended = true;
         if (!check_rsdp(rsdp20)) { print("Invalid RSDP 2.0"); asm("cli"); for (;;); }
-        print("Loading XSTD...");
+        print("[ACPI] Loading XSTD...");
         sdt = (sdt_header_t*)rsdp20->xsdt;
         print("Done\n\r");
         if (!validate_sdt(sdt)) { print("Invalid XSDT."); asm("cli"); for(;;); }
     }
 
     void print_sdt(sdt_header_t* header) {
-        printf("ID: %c%c%c%c\n\rLength: %x\n\rRevision: %x\n\rChecksum: %x\n\rOEM ID: %c%c%c%c%c%c\n\rOEM Table ID: %c%c%c%c%c%c%c%c\n\rOEM Revision: %x\n\r",
+        printf("[ACPI] ID: %c%c%c%c\n\r[ACPI] Length: %x\n\r[ACPI] Revision: %x\n\r[ACPI] Checksum: %x\n\r[ACPI] OEM ID: %c%c%c%c%c%c\n\r[ACPI] OEM Table ID: %c%c%c%c%c%c%c%c\n\r[ACPI] OEM Revision: %x\n\r",
             header->signature[0],header->signature[1],header->signature[2],header->signature[3],
             header->length,
             header->revision,
@@ -52,7 +52,7 @@ namespace ACPI {
     }
 
     void print_address(acpi_address_t addr) {
-        print("Address Space: ");
+        print("[ACPI] Address Space: ");
         switch (addr.address_space) {
             case ACPI_ADDRESS_SPACE_RAM:
                 print("RAM");
@@ -64,7 +64,7 @@ namespace ACPI {
                 print("?");
                 break;
         }
-        printf("\n\rBit Width: %x\n\rBit Offset: %x\n\rAccess Size: ",addr.bit_width,addr.bit_offset);
+        printf("\n\r[ACPI] Bit Width: %x\n\r[ACPI] Bit Offset: %x\n\r[ACPI] Access Size: ",addr.bit_width,addr.bit_offset);
         switch (addr.access_size) {
             case 0:
                 print("Undefined");
@@ -82,7 +82,7 @@ namespace ACPI {
                 print("Quad Word");
                 break;
         }
-        printf("\n\rAddress: %h",addr.address);
+        printf("\n\r[ACPI] Address: %h",addr.address);
     }
 
     sdt_header_t* get_table(char* signature) {
@@ -101,8 +101,8 @@ namespace ACPI {
             debugf("%h: %c%c%c%c\n\r",new_table,new_table->signature[0],new_table->signature[1],new_table->signature[2],new_table->signature[3]);
             if (memcmp(new_table->signature,signature,4)) table = new_table;
         }
-        if (!table) { printf("No table with signature %s.", signature); asm("cli"); for (;;); }
-        if (!validate_sdt(table)) { print("Invalid SDT."); asm("cli"); for(;;); }
+        if (!table) { printf("[ACPI] No table with signature %s.", signature); asm("cli"); for (;;); }
+        if (!validate_sdt(table)) { print("[ACPI] Invalid SDT."); asm("cli"); for(;;); }
         return table;
     }
 
@@ -158,7 +158,7 @@ namespace ACPI {
     void* get_s5(void) {
         fadt_t* fadt = (fadt_t*)get_table("FACP");
         sdt_header_t* dsdt = (sdt_header_t*)fadt->dsdt;
-        if (!memcmp(dsdt->signature,(void*)"DSDT",4)) { print("Invalid DSDT.\n\r"); asm("cli"); for (;;); }
+        if (!memcmp(dsdt->signature,(void*)"DSDT",4)) { print("[ACPI] Invalid DSDT.\n\r"); asm("cli"); for (;;); }
         char* s5_addr = (char*)((uint64_t)dsdt + 36);
         int dsdt_length = dsdt->length - 36;
         while (0 < dsdt_length--) {
@@ -168,7 +168,7 @@ namespace ACPI {
         if (dsdt_length > 0) {
             return s5_addr;
         } else {
-            print("\\_S5_ not present!");
+            print("[ACPI] \\_S5_ not present!");
             asm("cli");
             for (;;);
         }
@@ -177,7 +177,7 @@ namespace ACPI {
 
     uint16_t get_typa(void) {
         char* s5 = (char*)get_s5();
-        if (!((s5[-1]==0x08) || ((s5[-2] == 0x08) && (s5[-1] == '\\'))  && (s5[4] == 0x12))) { print("\\_S5_ parse error."); asm("cli"); for (;;); }
+        if (!((s5[-1]==0x08) || ((s5[-2] == 0x08) && (s5[-1] == '\\'))  && (s5[4] == 0x12))) { print("[ACPI] \\_S5_ parse error."); asm("cli"); for (;;); }
         s5 += 5;
         s5 += ((*s5 & 0xC0) >> 6) + 2;
         if (*s5 == 0x0A) s5++;
@@ -186,7 +186,7 @@ namespace ACPI {
 
     uint16_t get_typb(void) {
         char* s5 = (char*)get_s5();
-        if (!((s5[-1]==0x08) || ((s5[-2] == 0x08) && (s5[-1] == '\\')) && (s5[4] == 0x12))) { print("\\_S5_ parse error."); asm("cli"); for (;;); }
+        if (!((s5[-1]==0x08) || ((s5[-2] == 0x08) && (s5[-1] == '\\')) && (s5[4] == 0x12))) { print("[ACPI] \\_S5_ parse error."); asm("cli"); for (;;); }
         s5 += 5;
         s5 += ((*s5 & 0xC0) >> 6) + 2;
         if (*s5 == 0x0A) s5++;
@@ -199,11 +199,11 @@ namespace ACPI {
         enable_acpi(); // Just to make sure
         fadt_t *fadt = (fadt_t*)get_table("FACP");
         uint16_t typa = get_typa();
-        print("Powering off in 5 seconds...\n\r");
+        print("[ACPI] Powering off in 5 seconds...\n\r");
         PIT::sleep(5000);
-        print("Sending TYPa...\n\r");
+        print("[ACPI] Sending TYPa...\n\r");
         outw(fadt->pm1a_control_block,get_typa() | (1<<13));
-        print("Sending TYPb...\n\r");
+        print("[ACPI] Sending TYPb...\n\r");
         if (fadt->pm1b_control_block != 0) outw(fadt->pm1b_control_block,get_typb() | (1<<13));
     }
 
@@ -224,19 +224,19 @@ namespace ACPI {
                     }
                 }
                 if (i < 300) {
-                    print("ACPI enabled!\n\r");
+                    print("[ACPI] ACPI enabled!\n\r");
                 } else {
-                    print("Couldn't enable ACPI");
+                    print("[ACPI] Couldn't enable ACPI");
                     asm("cli");
                     for (;;);
                 }
             } else {
-                print("Can't enable ACPI");
+                print("[ACPI] Can't enable ACPI");
                 asm("cli");
                 for (;;);
             }
         } else {
-            print("ACPI already enabled\n\r");
+            print("[ACPI] ACPI already enabled\n\r");
         }
     }
 
@@ -245,14 +245,14 @@ namespace ACPI {
     }
 
     void print_apic_table(sdt_header_t* header) {
-        print("Found APIC table:\n\r");
+        print("[ACPI] Found APIC table:\n\r");
         uint32_t loacal_apic_addr = *(uint32_t*)((uint64_t)header + 36 + 0);
         uint32_t flags = *(uint32_t*)((uint64_t)header + 36 + 4);
-        printf("    Local APIC: %h\n\r    Legacy Dual PICs installed: %s\n\r    Mask all PIC Interrupts: %s\n\r    Entries:\n\r",loacal_apic_addr,(flags & 2)?"Yes":"No",(flags & 1)?"Yes":"No");
+        printf("[ACPI]     Local APIC: %h\n\r[ACPI]     Legacy Dual PICs installed: %s\n\r[ACPI]     Mask all PIC Interrupts: %s\n\r[ACPI]     Entries:\n\r",loacal_apic_addr,(flags & 2)?"Yes":"No",(flags & 1)?"Yes":"No");
         uint64_t remaining = (header->length - 44);
         uint8_t* entry = (uint8_t*)((uint64_t)header + 44);
         while (remaining > 0) {
-            print("        ");
+            print("[ACPI]         ");
             switch (entry[0]) {
                 case 0: printf("Processor Local APIC                : CPU %x APIC %x",entry[2],entry[3]); break;
                 case 1: printf("I/O APIC                            : ID %x ADDR %h",entry[2],*((uint64_t*)&(entry[4]))); break;
@@ -270,8 +270,8 @@ namespace ACPI {
     }
     
     void print_hpet_table(sdt_header_t* header) {
-        print("Found HPET table:\n\r");
-        printf("    HPET Number: %x\n\r", *(uint8_t*)((uint64_t)header + 36 + 16));
+        print("[ACPI] Found HPET table:\n\r");
+        printf("[ACPI]     HPET Number: %x\n\r", *(uint8_t*)((uint64_t)header + 36 + 16));
     }
 
     void print_hardware_table(sdt_header_t* header) {

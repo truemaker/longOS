@@ -6,7 +6,7 @@ bool bitmap_t::operator[](uint64_t index) {
 
 bool bitmap_t::get(uint64_t index) {
     debugf("Getting %x\n\r",index);
-    if (index > size) {printf("Bitmap Access error: read\n\r%t"); asm("cli"); for (;;); return false;}
+    if (index > size) {printf("[BITMAP] Bitmap Access error: read\n\r%t"); asm("cli"); for (;;); return false;}
     uint64_t idx4baligned = index / 32;
     uint64_t idxin4b = index % 32;
     uint32_t b = bytes[idx4baligned];
@@ -17,7 +17,7 @@ bool bitmap_t::get(uint64_t index) {
 
 void bitmap_t::set(uint64_t index, bool value) {
     debugf("Setting %x\n\r",index);
-    if (index > size) {printf("Bitmap Access error: write\n\r%t"); asm("cli"); for (;;); return;}
+    if (index > size) {printf("[BITMAP] Bitmap Access error: write\n\r%t"); asm("cli"); for (;;); return;}
     uint64_t idx4baligned = index / 32;
     uint64_t idxin4b = index % 32;
     uint32_t b = bytes[idx4baligned];

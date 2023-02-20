@@ -184,15 +184,15 @@ void set_mode(uint64_t wd, uint64_t ht) {
         case 80:
             switch (ht) {
                 case 25: load_registers(g_80x25_text); write_font(g_8x16_font,16); break;
-                default: load_registers(g_80x25_text); write_font(g_8x16_font,16); w = 80; h = 25; clear(); printf("No mode with height %x.",ht); for (;;);
+                default: load_registers(g_80x25_text); write_font(g_8x16_font,16); w = 80; h = 25; clear(); printf("[VGA] No mode with height %x.",ht); for (;;);
             } break;
         case 90:
             switch (ht) {
                 case 30: load_registers(g_90x30_text); write_font(g_8x16_font,16); break;
                 case 60: load_registers(g_90x60_text); write_font(g_8x8_font,8); break;
-                default: load_registers(g_80x25_text); write_font(g_8x16_font,16); w = 80; h = 25; clear(); printf("No mode with height %x.",ht); for (;;);
+                default: load_registers(g_80x25_text); write_font(g_8x16_font,16); w = 80; h = 25; clear(); printf("[VGA] No mode with height %x.",ht); for (;;);
             } break;
-        default: load_registers(g_80x25_text); write_font(g_8x16_font,16); w = 80; h = 25; clear(); printf("No mode with width %x.",wd); for (;;);
+        default: load_registers(g_80x25_text); write_font(g_8x16_font,16); w = 80; h = 25; clear(); printf("[VGA] No mode with width %x.",wd); for (;;);
     }
     w = wd; h = ht;
 }

@@ -49,7 +49,7 @@ void init_disk(device_t* dev) {
 }
 
 void reset_device(device_t* dev) {
-    print("Resetting drive...\n\r");
+    print("[DISK] Resetting drive...\n\r");
     uint8_t dctl = inb(dev->dev_ctl);
     outb(dev->dev_ctl, dctl | 4);
     PIT::sleep(10);

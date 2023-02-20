@@ -257,6 +257,7 @@ namespace PCI {
         if (read_config_word(bus,device,func,0x2) == 0xFFFF) return;
         if (read_config_word(bus,device,func,0x0) == 0x0000) return;
         if (read_config_word(bus,device,func,0x0) == 0xFFFF) return;
+        print("[PCI] ");
         print_vendor(bus,device,func);
         print(" / ");
         uint16_t dclass_specification = read_config_word(bus,device,func,0x8);

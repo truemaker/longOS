@@ -1,6 +1,7 @@
 #pragma once
 #include <typedef.h>
 #include <disk.h>
+#include <vfs.h>
 
 #define MAX_FILES 32
 
@@ -24,8 +25,13 @@ namespace USTAR {
         char filename_prefix[155];
     } file_entry_t;
 
+    typedef struct file {
+        file_entry_t entry;
+        uint64_t lba;
+    } file_t;
+
     typedef struct ustar {
-        file_entry_t files[MAX_FILES];
+        file_t files[MAX_FILES];
         ustar(uint8_t*);
         ustar(device_t*,uint64_t,uint64_t);
         void list_files(void);

@@ -10,7 +10,7 @@ bool task_creation_in_progress;
 uint64_t next_pid;
 
 void _stack_error() {
-    print("Stack error\n\r");
+    print("[TASK] Stack error\n\r");
     // TODO: Destroy process
     for (;;);
 }

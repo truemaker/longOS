@@ -10,7 +10,7 @@ void print_memory(void) {
     for (uint64_t i = 0; i < memory_region_count; i++) {
         mmap_entry_t* entry = (mmap_entry_t*)MEMORY_MAP;
         entry += i;
-        printf("Memory region at %h with size %h is %s\n\r", entry->base, entry->size, (entry->type == 1) ? "Usable" : ((entry->type == 3) ? "ACPI reclaimable" : ((entry->type == 4) ? "ACPI NVS Storage" : ((entry->type == 5) ? "broken" : "Reserved"))));
+        printf("[MEMORY] Region at %h with size %h is %s\n\r", entry->base, entry->size, (entry->type == 1) ? "Usable" : ((entry->type == 3) ? "ACPI reclaimable" : ((entry->type == 4) ? "ACPI NVS Storage" : ((entry->type == 5) ? "broken" : "Reserved"))));
     }
 }
 
@@ -55,7 +55,7 @@ bool is_in_entry(mmap_entry_t* entry, void* addr) {
 void convert_mmap_to_bmp(void) {
     uint64_t pages = get_memory_size() / 0x1000;
     uint64_t bytes = pages / 8;
-    printf("Memory bitmap is %x bytes and contains %x pages\n\r", bytes, pages);
+    printf("[MEMORY] Bitmap is %x bytes and contains %x pages\n\r", bytes, pages);
     memory_map = bitmap_t();
     memory_map.size = pages+1;
     memory_map.bytes = _mmap;
@@ -106,7 +106,7 @@ void unreserve_pages(void* addr, uint64_t count) {
 }
 void lock_page(void* addr) {
     uint64_t index = align_to_start((uint64_t)addr,0x1000)/0x1000;
-    if ((uint64_t)addr >= get_memory_size()) {printf("Outside of physical memory: lock\n\r%t");asm("cli");for(;;);}
+    if ((uint64_t)addr >= get_memory_size()) {printf("[MEMORY] Outside of physical memory: lock\n\r%t");asm("cli");for(;;);}
     if (memory_map.get(index)) return;
     memory_map.set(index,1);
     used_mem += 0x1000;
@@ -115,7 +115,7 @@ void lock_page(void* addr) {
 
 void free_page(void* addr) {
     uint64_t index = align_to_start((uint64_t)addr,0x1000)/0x1000;
-    if ((uint64_t)addr >= get_memory_size()) {printf("Outside of physical memory: free\n\r%t");asm("cli");for(;;);}
+    if ((uint64_t)addr >= get_memory_size()) {printf("[MEMORY] Outside of physical memory: free\n\r%t");asm("cli");for(;;);}
     if (memory_map.get(index)) return;
     memory_map.set(index,0);
     used_mem -= 0x1000;
@@ -186,22 +186,22 @@ void print_segments(void) {
         displayr /= 1024;
         unitr++;
     }
-    printf("Used: %x %s\n\rFree: %x %s\n\rReserved: %x %s\n\r", displayu, unit[unitu], displayf, unit[unitf], displayr, unit[unitr]);
+    printf("[MEMORY] Used: %x %s\n\r[MEMORY] Free: %x %s\n\r[MEMORY] Reserved: %x %s\n\r", displayu, unit[unitu], displayf, unit[unitf], displayr, unit[unitr]);
 }
 
 void* request_page(bool map_page) {
-    debugf("Requested new page\n\r");
+    debugf("[MEMORY] Requested new page\n\r");
     uint64_t addr = 0;
     uint64_t mem_size = align_to_start(get_memory_size(),0x1000);
-    debugf("Mem Size: %h\n\r",mem_size);
+    debugf("[MEMORY] Mem Size: %h\n\r",mem_size);
     while (addr<mem_size) {
-        debugf("Checking %h\n\r",addr);
+        debugf("[MEMORY] Checking %h\n\r",addr);
         if (!memory_map.get(addr/0x1000)) break;
-        debugf("Checked %h\n\r",addr);
+        debugf("[MEMORY] Checked %h\n\r",addr);
         addr += 0x1000;
     }
-    if (!(addr < (align_to_start(get_memory_size(),0x1000)))) { print("Out of memory: Single page"); for (;;); return 0; }
-    if (addr > get_memory_size()) { print("Something went wrong while allocating"); for(;;); return 0; }
+    if (!(addr < (align_to_start(get_memory_size(),0x1000)))) { print("[MEMORY] Out of memory: Single page"); for (;;); return 0; }
+    if (addr > get_memory_size()) { print("[MEMORY] Something went wrong while allocating"); for(;;); return 0; }
     lock_page((void*)addr);
     debugf("Found page %h\n\r", addr);
     return (void*)addr;
@@ -220,15 +220,15 @@ void* request_pages(uint64_t count,bool map_page) {
             i++;
             debugf("Checking %h\n\r",i*0x1000);
         }
-        if (!(i < (get_memory_size()/0x1000))) { print("Out of memory: Multiple"); for (;;); return 0; }
+        if (!(i < (get_memory_size()/0x1000))) { print("[MEMORY] Out of memory: Multiple"); for (;;); return 0; }
         debugf("Checked %h v %x\n\r",i*0x1000,pages+1);
         pages++;
         if (pages > (count-1)) break;
         i++;
     }
-    if (pages < count) { print("Out of memory: Multiple page"); for (;;); return 0; }
+    if (pages < count) { print("[MEMORY] Out of memory: Multiple page"); for (;;); return 0; }
     uint64_t addr = 0x1000 * i;
-    if (addr > get_memory_size()) { print("Something went wrong while allocating"); for(;;); return 0; }
+    if (addr > get_memory_size()) { print("[MEMORY] Something went wrong while allocating"); for(;;); return 0; }
     lock_pages((void*)addr - (0x1000*count),count);
     debugf("Found pages %h - %h\n\r", addr - (0x1000*count), addr);
     return (void*)addr;
@@ -447,7 +447,7 @@ void* ptm_t::allocate_page(void) {
         allocating = false;
         return (void*)(i*0x1000);
     }
-    print("Out of virtual memory");
+    print("[MEMORY] Out of virtual memory");
     for (;;);
     return (void*)0;
 }
@@ -477,7 +477,7 @@ void* ptm_t::allocate_pages(uint64_t count) {
             return (void*)(i*0x1000);
         }
     }
-    print("Out of virtual memory");
+    print("[MEMORY] Out of virtual memory");
     for (;;);
     return nullptr; // Hope this never happens
 }

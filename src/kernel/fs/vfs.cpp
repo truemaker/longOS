@@ -50,8 +50,8 @@ namespace VFS {
     }
     void print_vfs_tree_node(vfs_tree_node_t *node) {
         if (!node->value) return;
-        printf("%s%s\n\r",node->value->name,node->children ? " {" : ";");
-        if (!node->children) return;
+        printf("%s%s\n\r",node->value->name,node->childs ? " {" : ";");
+        if (!node->childs) return;
         vfs_tree_node_t* current = node->children;
         while (current->next) {
             print_vfs_tree_node(current);
