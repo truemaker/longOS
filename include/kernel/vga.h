@@ -99,3 +99,4 @@ void disable_cursor(void);
 void enable_cursor(void);
 extern void write_font(unsigned char *buf, unsigned font_height);
 void clear_line(void);
+void new_line();

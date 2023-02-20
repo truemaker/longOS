@@ -26,7 +26,7 @@ void trace(unsigned int frames, struct stackframe* stk) {
         } else if (stk->rip > (uint64_t)&end_extboot && stk->rip < (uint64_t)&_end_all) {
           print("-> Kernel");
         }
-        print("\n\r");
+        new_line();
         stk = stk->ebp;
     }
 }

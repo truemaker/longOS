@@ -76,7 +76,7 @@ __attribute__((interrupt)) void pagef_handler(interrupt_frame_t* int_frame) {
     if ((1 << 6)&int_frame->err_code) print("shadow-stack access");
     else if ((1 << 5)&int_frame->err_code) print("protection-key");
     else print("bad programming");
-    print("\n\r");
+    new_line();
     trace(10,(struct stackframe*)int_frame->rsp);
     for (;;);
     serial::write_serial("Pulsing Reset line.\n\r",21);
@@ -124,6 +124,6 @@ __attribute__((interrupt)) void gpf_handler(interrupt_frame_t* int_frame) {
             print_hex((0xfff8 & int_frame->err_code) >> 3);
         }
     }
-    print("\n\r");
+    new_line();
     for (;;);
 }

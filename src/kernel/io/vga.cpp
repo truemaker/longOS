@@ -479,3 +479,7 @@ void clear_line(void) {
     }
     set_cursor_pos(align_to_start(vga_pos,VGA_WIDTH));
 }
+
+void new_line() {
+    set_cursor_pos(coord_from_pos(0,vga_pos / VGA_WIDTH + 1));
+}

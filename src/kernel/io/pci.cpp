@@ -266,6 +266,6 @@ namespace PCI {
         uint8_t prog_if = (read_config_word(bus,device,func,0xa) & 0xff00) >> 8;
         print_device_type(dclass,dsubclass,prog_if);
         //print(device_class_names[dclass]);
-        print("\n\r");
+        new_line();
     }
 }

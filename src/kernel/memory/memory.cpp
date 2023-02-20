@@ -67,7 +67,7 @@ void convert_mmap_to_bmp(void) {
     uint64_t bytes = pages >> 3;
     printf("[MEMORY] Bitmap is %x bytes and contains %x pages\n\r", bytes, pages);
     memory_map = bitmap_t();
-    memory_map.size = (pages+1) / 8;
+    memory_map.size = pages / 8 + 1;
     memory_map.bytes = _mmap;
     memset(_mmap,0,0x4000);
     free_mem = get_memory_size();
@@ -203,8 +203,8 @@ void print_segments(void) {
 
 uint64_t page_bitmap_index = 0;
 void* request_page() {
-    for (; page_bitmap_index < memory_map.size * 8; page_bitmap_index++){
-        if (memory_map[page_bitmap_index] == true) continue;
+    for (; page_bitmap_index < (memory_map.size * 8); page_bitmap_index++){
+        if (memory_map.get(page_bitmap_index)) continue;
         lock_page((void*)(page_bitmap_index * 4096));
         return (void*)(page_bitmap_index * 4096);
     }
@@ -212,30 +212,18 @@ void* request_page() {
 }
 
 void* request_pages(uint64_t count) {
-    debugf("Requested new pages\n\r");
-    uint64_t i = 0;
-    uint64_t pages = 0;
-    while (i<(get_memory_size()/0x1000)) {
-        debugf("Checking %h\n\r",i*0x1000);
-        while (i<(get_memory_size()/0x1000)) {
-            if (!memory_map.get(i)) break;
-            debugf("Checked %h x\n\r",i*0x1000);
-            pages = 0;
-            i++;
-            debugf("Checking %h\n\r",i*0x1000);
+    for (; page_bitmap_index < (memory_map.size * 8); page_bitmap_index++){
+        uint64_t i = 0;
+        for (; i <= count; i++) {
+            if (memory_map.get(page_bitmap_index+i)) break;
+            if (i == count) {
+                lock_pages((void*)(page_bitmap_index * 4096),count);
+                return (void*)(page_bitmap_index * 4096);
+            }
         }
-        if (!(i < (get_memory_size()/0x1000))) { print("[MEMORY] Out of memory: Multiple"); for (;;); return 0; }
-        debugf("Checked %h v %x\n\r",i*0x1000,pages+1);
-        pages++;
-        if (pages > (count-1)) break;
-        i++;
+        page_bitmap_index += i;
     }
-    if (pages < count) { print("[MEMORY] Out of memory: Multiple page"); for (;;); return 0; }
-    uint64_t addr = 0x1000 * i;
-    if (addr > get_memory_size()) { print("[MEMORY] Something went wrong while allocating"); for(;;); return 0; }
-    lock_pages((void*)addr - (0x1000*count),count);
-    debugf("Found pages %h - %h\n\r", addr - (0x1000*count), addr);
-    return (void*)addr;
+    return NULL; // Page Frame Swap to file
 }
 
 page_index::page_index(uint64_t addr) {
@@ -253,7 +241,7 @@ page_index::page_index(uint64_t addr) {
 ptm_t::ptm(pt_t* pml4In, uint64_t page_count) {
     pml4 = pml4In;
     vmmap = bitmap_t();
-    vmmap.size = (page_count + 1)/8;
+    vmmap.size = (page_count)/8 + 1;
     vmmap.bytes = (uint8_t*)request_pages((page_count / 0x1000 / 8 + 1));
     memset(vmmap.bytes,0,(page_count / 0x1000 / 8 + 1)*0x1000);
     size = page_count;
@@ -424,14 +412,14 @@ void* ptm_t::get_paddr(void* vaddr) {
 void ptm_t::mark_page_used(void* page) {
     uint64_t pageIndex = align_to_start((uint64_t)page,0x1000)/0x1000;
     if (pageIndex >= vmmap.size) return;
-    if (vmmap[pageIndex]) return;
+    if (vmmap.get(pageIndex)) return;
     vmmap.set(pageIndex,1);
 }
 
 void ptm_t::mark_page_unused(void* page) {
     uint64_t pageIndex = align_to_start((uint64_t)page,0x1000)/0x1000;
     if (pageIndex >= vmmap.size) return;
-    if (!vmmap[pageIndex]) return;
+    if (!vmmap.get(pageIndex)) return;
     vmmap.set(pageIndex,0);
 }
 

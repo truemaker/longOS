@@ -55,7 +55,7 @@ namespace USTAR {
             }
             print(" ");
             print(file->username);
-            print("\n\r");
+            new_line();
         }
     }
 
@@ -69,6 +69,6 @@ namespace USTAR {
                 case EUSED: print("EUSED"); break;
             }
         }
-        print("\n\r");
+        new_line();
     }
 }

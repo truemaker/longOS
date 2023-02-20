@@ -262,7 +262,7 @@ namespace ACPI {
                 case 5: printf("Local APIC Address Override"); break;
                 case 9: printf("Processor Local x2APIC"); break;
             }
-            print("\n\r");
+            new_line();
             //printf("        Entry Type: %x\n\r        Length: %x\n\r",entry[0],entry[1]);
             remaining -= entry[1];
             entry += entry[1];

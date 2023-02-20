@@ -266,19 +266,7 @@ extern "C" void main() {
     USTAR::ustar_t tar = USTAR::ustar_t(&disk,2,1);
     tar.mount("/boot/");
 
-    ACPI::fadt_t* fadt = (ACPI::fadt_t*)ACPI::get_table("FACP");
-    print("[ACPI] Preffered Power Management Mode: ");
-    switch (fadt->preferred_power_management_profile) {
-        case 0:
-            print("Unspecified");
-            break;
-        default:
-            print("Unknown");
-    }
-    print("\n\r");
-    ACPI::detect_hardware();
     ACPI::enable_acpi();
-    PCI::print_pci();
     fork((void*)taskA);
     fork((void*)taskB);
     yield();
