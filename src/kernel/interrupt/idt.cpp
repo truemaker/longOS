@@ -8,6 +8,7 @@
 
 
 void(*main_keyboard_handler)(uint8_t scan_code);
+uint64_t nested_errors = 0;
 
 void pic_remap(void) {
     uint8_t a1,a2;
@@ -58,6 +59,8 @@ extern "C" void isr1_handler(void) {
 
 __attribute__((interrupt)) void pagef_handler(interrupt_frame_t* int_frame) {
     asm("cli");
+    if (nested_errors) for (;;);
+    nested_errors++;
     printf("A page fault has occured\n\rFault address: %h\n\rPML4: %h\n\rRIP: %h", read_cr2(), read_cr3(),int_frame->rip);
     print("\n\rReadable Message: ");
     uint64_t err = int_frame->err_code;
@@ -79,15 +82,6 @@ __attribute__((interrupt)) void pagef_handler(interrupt_frame_t* int_frame) {
     new_line();
     trace(10,(struct stackframe*)int_frame->rsp);
     for (;;);
-    serial::write_serial("Pulsing Reset line.\n\r",21);
-    uint8_t temp;
-    do
-    {
-        temp = inb(0x64);
-        if (((temp) & (1)) != 0)
-            inb(0x60);
-    } while (((temp) & (1<<1)) != 0);
-    outb(0x64,0xFE);
 }
 
 __attribute__((interrupt)) void doublef_handler(interrupt_frame_t* int_frame) {
@@ -104,6 +98,8 @@ __attribute__((interrupt)) void ssf_handler(interrupt_frame_t* int_frame) {
 
 __attribute__((interrupt)) void gpf_handler(interrupt_frame_t* int_frame) {
     asm("cli");
+    if (nested_errors) for (;;);
+    nested_errors++;
     printf("A general protection fault has occured\n\rCS: %h\n\rRIP: %h\n\rRSP: %h\n\r",int_frame->cs,int_frame->rip,int_frame->rsp >> 32);
     trace(10,(struct stackframe*)__builtin_frame_address(0));
     print("Readable Message: ");
