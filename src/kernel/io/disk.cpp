@@ -3,6 +3,8 @@
 #include <vga.h>
 #include <serial.h>
 #include <timer.h>
+#include <memory.h>
+#include <heap.h>
 
 device_t::device(uint16_t b, uint16_t ctl, uint8_t ms, char* name) {
     base = b;
@@ -12,30 +14,45 @@ device_t::device(uint16_t b, uint16_t ctl, uint8_t ms, char* name) {
     dev_name = name;
 }
 
+device_t::device() {
+    base = 0;
+    dev_ctl = 0;
+    master_slave_bit = 0;
+    type = DEV_UNINTIALIZED;
+    dev_name = 0;
+}
+
 void select(device_t* dev) {
     outb(dev->base + DEV_OFF_DSEL, dev->master_slave_bit);
-    inb(dev->dev_ctl);
-    inb(dev->dev_ctl);
-    inb(dev->dev_ctl);
-    inb(dev->dev_ctl);
+    for (uint64_t i = 0; i<15; i++) inb(dev->dev_ctl);
 }
 
 void select(device_t* dev, uint8_t flags) {
     outb(dev->base + DEV_OFF_DSEL, dev->master_slave_bit | flags);
-    inb(dev->dev_ctl);
-    inb(dev->dev_ctl);
-    inb(dev->dev_ctl);
-    inb(dev->dev_ctl);
+    for (uint64_t i = 0; i<15; i++) inb(dev->dev_ctl);
 }
 
 dev_type determine_dev_type(device_t* dev,dev_type def) {
     reset_device(dev);
     select(dev);
+    outb(dev->base+DEV_OFF_SC,0);
+    outb(dev->base+DEV_OFF_SN,0);
+    outb(dev->base+DEV_OFF_CL,0);
+    outb(dev->base+DEV_OFF_CH,0);
+    outb(dev->base+DEV_OFF_CMD,0xEC);
+    if (inb(dev->dev_ctl) == 0) return DEV_DISCONNECTED;
+    while (0x80 & inb(dev->dev_ctl));
     uint8_t cl = inb(dev->base + DEV_OFF_CL);
     uint8_t ch = inb(dev->base + DEV_OFF_CH);
+    if (cl != 0 || ch != 0) {
+        if (cl==0x14 && ch==0xEB) return DEV_PATAPI;
+        if (cl==0x69 && ch==0x96) return DEV_SATAPI;
+        return DEV_UNKNOWN_ATAPI;
+    }
+    while ((!(0x08 & inb(dev->dev_ctl))) && (0x01 & inb(dev->dev_ctl)));
     if (cl==0x14 && ch==0xEB) return DEV_PATAPI;
-    if (cl==0 && ch==0) return DEV_PATA;
     if (cl==0x69 && ch==0x96) return DEV_SATAPI;
+    if (cl==0 && ch==0) return DEV_PATA;
     if (cl==0x3c && ch==0xc3) return DEV_SATA;
     return def;
 }
@@ -85,7 +102,9 @@ bool wait_disk_ready(device_t* dev) {
     timer_t t;
     PIT::start_timer(&t);
     while (stat & (1 << 7) && !PIT::timer_expired(t,400)) stat = inb(dev->dev_ctl);
+    if (inb(dev->dev_ctl) & 0x01) { print("[DISK] drive error!\n\r"); reset_device(dev); return true; }
     while (!(stat & (1 << 3)) && !PIT::timer_expired(t,400)) stat = inb(dev->dev_ctl);
+    if (inb(dev->dev_ctl) & 0x01) { print("[DISK] drive error!\n\r"); reset_device(dev); return true; }
     if (PIT::timer_expired(t,400)) { reset_device(dev); return true; }
     return false;
 }
@@ -155,4 +174,10 @@ void print_mbr(mbr_t* mbr) {
     print("\n\rPartition 3: \n\r");
     print_partition(&mbr->partition3);
     printf("\n\rValid: %s\n\r", (mbr->signature == 0xAA55)?"Yes":"No");
+}
+
+device_t* devdup(device_t* dev) {
+    device_t* dup = (device_t*)heap::malloc(sizeof(dev));
+    memcpy(dup,dev,sizeof(dev));
+    return dup;
 }

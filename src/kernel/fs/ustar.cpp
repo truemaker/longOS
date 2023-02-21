@@ -34,7 +34,7 @@ namespace USTAR {
             uint64_t size = oct2bin((uint8_t*)file->size,11);
             current_sector += (((size + 511) / 512) + 1);
         }
-        delete buf;
+        heap::free(buf);
     }
 
     void ustar::list_files(void) {
@@ -61,14 +61,16 @@ namespace USTAR {
 
     void ustar::mount(char* path) {
         printf("[USTAR] Mounting ustar to %s\n\r",path);
-        uint32_t err = VFS::vfs_mount(path,this,0x01);
+        uint32_t err = VFS::vfs_mount(path,this,FS_IMPL_USTAR);
         if (err) { printf("[USTAR] Failed to mount to %s due to ",path);
             switch (err) {
                 case EINVAL: print("EINVAL"); break;
                 case ERELATIVE: print("ERELATIVE"); break;
                 case EUSED: print("EUSED"); break;
+                default: printf("code %x",err);
             }
+            new_line();
         }
-        new_line();
+        VFS::print_vfs();
     }
 }

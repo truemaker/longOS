@@ -15,9 +15,6 @@ mov ah, 0x00
 mov al, 0x2
 int 0x10
 
-mov si, msg_hello
-call print
-
 call read_tar
 call parse_tar
 
@@ -25,6 +22,7 @@ mov si, msg_done
 call print
 
 mov al, [BOOT_DISK]
+mov ah, [file_size]
 push ax
 push 0x8000
 ret
@@ -66,10 +64,6 @@ get_size:
     push dx
     push bx
 .size_bytes:
-    push si
-    mov si, msg_start_size
-    call print
-    pop si
     add si, 0x7c ; size
     mov cx, 11
     call convert_to_int
@@ -79,6 +73,7 @@ get_size:
     mov bx, 512
     div bx
     inc ax
+    mov [file_size], al
 .end:
     pop bx
     pop dx
@@ -104,9 +99,7 @@ parse_tar:
     je .found
     jmp $
 .found:
-    push bx
     call get_size
-    pop bx
     mov bx, 1
     call read_kernel
 .end:
@@ -161,22 +154,65 @@ print:
     ret
 
 read_kernel:
-    mov cx, bx
-    add cx, 0x03
-    mov al, 124
-    
+    mov ax, bx
+    add ax, 0x02
+.repeat:
+    call lba_to_chs
+    mov al, [file_size]
+    cmp al, 128
+    jle .after
+    mov al, 128
+.after:
     push es
     push 0x800
     pop es
 
     mov bx, 0
-    mov dh, 0
     mov ah, 0x02
-    mov ch, 0
     mov dl, [BOOT_DISK]
     int 0x13
     jc disk_error
     pop es
+.end:
+    ret
+
+;
+; Disk routines
+;
+
+;
+; Converts an LBA address to a CHS address
+; Parameters:
+;   - ax: LBA address
+; Returns:
+;   - cx [bits 0-5]: sector number
+;   - cx [bits 6-15]: cylinder
+;   - dh: head
+;
+
+lba_to_chs:
+
+    push ax
+    push dx
+
+    xor dx, dx                          ; dx = 0
+    div word [eighteen]                 ; ax = LBA / SectorsPerTrack
+                                        ; dx = LBA % SectorsPerTrack
+
+    inc dx                              ; dx = (LBA % SectorsPerTrack + 1) = sector
+    mov cx, dx                          ; cx = sector
+
+    xor dx, dx                          ; dx = 0
+    div word [two]                      ; ax = (LBA / SectorsPerTrack) / Heads = cylinder
+                                        ; dx = (LBA / SectorsPerTrack) % Heads = head
+    mov dh, dl                          ; dh = head
+    mov ch, al                          ; ch = cylinder (lower 8 bits)
+    shl ah, 6
+    or cl, ah                           ; put upper 2 bits of cylinder in CL
+
+    pop ax
+    mov dl, al                          ; restore DL
+    pop ax
     ret
 
 disk_error:
@@ -185,15 +221,16 @@ disk_error:
     jmp $
 
 msg_disk_error: db "Disk Error!",0
-msg_hello: db "Hello, World!",0xD,0xA,0
 msg_found: db "Found kernel.bin",0xD,0xA,0
 msg_loading: db "Loading kernel.bin",0xD,0xA,0
-msg_size: db "Got size",0xD,0xA,0
-msg_start_size: db "Calculating size...",0xD,0xA,0
 msg_done: db "Finished loading kernel.bin",0
 BOOT_DISK: db 0
 kernel_name: db "kernel.bin"
 buffer: times 10 db 0
+
+file_size: db 0
+two: dw 2
+eighteen: dw 18
 
 times 510-($-$$) db 0
 dw 0xaa55

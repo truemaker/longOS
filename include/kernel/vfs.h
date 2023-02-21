@@ -52,6 +52,7 @@ namespace VFS {
         char* name;
         fs_node_t* file;
         char* device;
+        void* device_ptr;
         char* fs_type;
     } vfs_entry_t;
 
@@ -73,4 +74,5 @@ namespace VFS {
     void install_vfs(void);
     void print_vfs(void);
     int vfs_mount(char*,void*,uint64_t);
+    int add_device(void* dev, char* name);
 }

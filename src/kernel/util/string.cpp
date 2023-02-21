@@ -4,17 +4,15 @@
 #include <string.h>
 #include <vga.h>
 
-size_t strlen(const char * s) {
-	const char * a = s;
-	const size_t * w;
-	for (; (uint64_t)s % ALIGN; s++) {
-		if (!*s) {
-			return s-a;
-		}
-	}
-	for (w = (const size_t *)s; !HASZERO(*w); w++);
-	for (s = (const char *)w; *s; s++);
-	return s-a;
+size_t strlen(const char * str) {
+	size_t len = 0;
+    while (*str)
+    {
+        ++len;
+        ++str;
+    }
+
+    return len;
 }
 
 bool strcmp(char* a, char* b) {
@@ -57,19 +55,21 @@ char* uitos(uint64_t i, uint64_t base) {
 	if (base > 10) { print("[STRING] base > 10 is not supported yet\n\r"); return 0; }
 	if (base == 1) { print("[STRING] base == 1 is illegal\n\r"); return 0; }
 	uint64_t d = udigits(i,base);
-	char* s = (char*)heap::malloc(d);
+	char* s = (char*)heap::malloc(d+1);
 	uint64_t v = i;
 	for (uint16_t j = 0; j < d; j++) {
-		s[d-j+1] = (v % base)+'0';
+		s[d-j-1] = (v % base)+'0';
 		v /= base;
 	}
+	s[d] = 0;
 	return s;
 }
 
 char* strcat(char* a, char* b) {
-	char* s = (char*)heap::malloc(strlen(a)+strlen(b));
+	char* s = (char*)heap::malloc(strlen(a)+strlen(b)+1);
 	strcpy(s,a);
 	strcpy(s+strlen(a),b);
+	s[strlen(a)+strlen(b)] = 0;
 	return s;
 }
 

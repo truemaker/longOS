@@ -19,6 +19,8 @@ namespace VFS_TREE {
         node->next = 0;
         node->prev = 0;
         node->children = 0;
+        node->value = 0;
+        return node;
     }
     void set_value(VFS::vfs_tree_node_t* node, VFS::vfs_entry_t* value) {
         node->value = value;
@@ -38,7 +40,8 @@ namespace VFS_TREE {
     }
     VFS::vfs_tree_node_t* get_child(VFS::vfs_tree_node_t* parent, char* name) {
         VFS::vfs_tree_node_t* current = parent->children;
-        for (uint64_t i = 0; i < parent->childs; i++) {
+        while (current) {
+            if (!current->value) { current = current->next; continue; }
             if (strcmp(current->value->name,name)) return current;
             current = current->next;
         }
@@ -61,10 +64,10 @@ namespace VFS {
     }
     void print_vfs_tree_node(vfs_tree_node_t *node) {
         if (!node->value) return;
-        printf("%s%s\n\r",node->value->name,node->childs ? " {" : ";");
+        printf("%s%s\n\r",node->value->name,node->childs ? "{" : ";");
         if (!node->childs) return;
         vfs_tree_node_t* current = node->children;
-        while (current->next) {
+        while (current) {
             print_vfs_tree_node(current);
             current = current->next;
         }
@@ -74,7 +77,8 @@ namespace VFS {
         print_vfs_tree_node(vfs_root->root);
     }
     int vfs_get_tree_node(char* ipath,vfs_tree_node_t* out) {
-        char* path = strdup(path);
+        char* path = strdup(ipath);
+        char* org_path = path;
         if (path[0] != PATH_SEPERATOR) return ERELATIVE;
         vfs_tree_node_t* current = vfs_root->root;
         uint64_t path_len = strlen(path);
@@ -85,6 +89,7 @@ namespace VFS {
         while (path_len--) {
             vfs_tree_node_t* new_current = VFS_TREE::get_child(current,path);
             if (!new_current) {
+                printf("[VFS] Create node %s\n\r", path);
                 new_current = VFS_TREE::create_node();
                 new_current->value = new vfs_entry_t;
                 new_current->value->name = strdup(path);
@@ -94,8 +99,8 @@ namespace VFS {
             path_len -= strlen(path);
             path += strlen(path) + 1;
         }
-        //heap::free(path);
-        out = current;
+        heap::free(org_path);
+        *out = *current;
         return SUCCESS;
     }
     int vfs_get_file(char* path,vfs_entry_t* out) {
@@ -156,6 +161,23 @@ namespace VFS {
             case FS_IMPL_USTAR: vfs_mount_ustar((USTAR::ustar_t*)mount,node,"ustar"); break;
             default: printf("[VFS] Error FS_IMPL %h not supported\n\r",impl); return EINVAL;
         }
+        return SUCCESS;
+    }
+
+    int add_device(void* dev, char* name) {
+        print("[VFS] Adding device at ");
+        print_hex((uint64_t)dev);
+        print(" as ");
+        print(name);
+        new_line();
+        char* path = name;
+        if (name[0] != PATH_SEPERATOR) path = strcat("/",name);
+        vfs_tree_node_t* node;
+        int ecode = vfs_get_tree_node(path,node);
+        if (ecode) return ecode;
+        vfs_entry_t* entry = node->value;
+        if (!entry) { print("[VFS] Node doesn't have value creating entry\n\r"); entry = node->value = new vfs_entry_t; }
+        entry->device_ptr = dev;
         return SUCCESS;
     }
 }

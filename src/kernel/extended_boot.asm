@@ -4,7 +4,7 @@
 _start:
 pop ax
 mov [bdisk], al
-mov [bpart], ah
+mov [kernel_sectors], ah
 
 mov si, msg_hello
 call print
@@ -208,10 +208,12 @@ msg_a20_on: db "Activated a20", 0
 msg_a20_ns: db "a20 ns", 0
 memory_region_count: db 0
 bdisk: db 0
+kernel_sectors: db 0
 bpart: db 0
 
 [global bdisk]
 [global bpart]
+[global kernel_sectors]
 [global memory_region_count]
 
 g_nulldesc:

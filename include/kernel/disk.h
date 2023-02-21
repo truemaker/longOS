@@ -13,13 +13,14 @@
 #define DEV_OFF_CMD 7
 
 enum dev_type {
+    DEV_UNINTIALIZED,
     DEV_PATA,
     DEV_SATA,
     DEV_PATAPI,
     DEV_SATAPI,
     DEV_UNKNOWN,
-    DEV_DISCONNECTED,
-    DEV_UNINTIALIZED
+    DEV_UNKNOWN_ATAPI,
+    DEV_DISCONNECTED
 };
 
 typedef struct device {
@@ -29,6 +30,7 @@ typedef struct device {
     uint64_t type;
     char* dev_name;
     device(uint16_t b, uint16_t ctl, uint8_t ms, char* name);
+    device();
 } device_t;
 
 typedef struct partition {
@@ -60,3 +62,4 @@ void print_device(device_t* dev);
 void read_disk(device_t* dev, uint8_t* buffer, uint32_t lba, uint8_t sectors);
 void write_disk(device_t* dev, uint8_t* buffer, uint32_t lba, uint8_t sectors);
 void print_mbr(mbr_t* mbr);
+device_t* devdup(device_t*);

@@ -20,9 +20,11 @@
 #include <ustar.h>
 #include <typedef.h>
 #include <vfs.h>
+#include <string.h>
 
 ptm_t* g_PTM = NULL;
 extern uint64_t _stack;
+extern uint8_t kernel_sectors;
 uint16_t buffer0[256];
 uint16_t buffer1[2048];
 
@@ -78,15 +80,52 @@ ptm_t init_paging(void) {
     return pm;
 }
 
-device_t init_disk(void) {
+char* cd_names[] {
+    "/dev/cda",
+    "/dev/cdb",
+    "/dev/cdc",
+    "/dev/cdd"
+};
+
+char* hd_names[] {
+    "/dev/hda",
+    "/dev/hdb",
+    "/dev/hdc",
+    "/dev/hdd"
+};
+
+device_t* init_disk(void) {
     print("[KERNEL] Init disk...\n\r");
 
-    device_t dev0 = device_t(0x1f0,0x3F6,0xA0,"Disk 1");
-    device_t dev1 = device_t(0x1f0,0x3F6,0xB0,"Disk 2");
-    device_t dev2 = device_t(0x170,0x376,0xA0,"Disk 3");
-    device_t dev3 = device_t(0x170,0x376,0xB0,"Disk 4");
+    device_t devs[4];
 
-    return dev0;
+    devs[0] = device_t(0x1f0,0x1f6,0xA0,"Disk 1");
+    devs[1] = device_t(0x1f0,0x1f6,0xB0,"Disk 2");
+    devs[2] = device_t(0x170,0x176,0xA0,"Disk 3");
+    devs[3] = device_t(0x170,0x176,0xB0,"Disk 4");
+
+    bool found = false;
+    uint64_t hd = 0;
+    uint64_t cd = 0;
+    uint64_t select = 0;
+    for (uint64_t i = 0; i < 4; i++) {
+        init_disk(&devs[i]);if (devs[i].type == DEV_PATAPI || devs[i].type == DEV_SATAPI) {
+            printf("[KERNEL] Found %sPI drive\n\r",devs[i].type == DEV_PATAPI ? "PATA" : "SATA");
+            VFS::add_device(devdup(&devs[i]),cd_names[cd]);
+            cd++;
+        } else if (devs[i].type == DEV_PATA || devs[i].type == DEV_SATA) {
+            if (!found) { found = true; select = i; }
+            printf("[KERNEL] Found %s drive\n\r",devs[i].type == DEV_PATA ? "PATA" : "SATA");
+            VFS::add_device(devdup(&devs[i]),hd_names[hd]);
+            hd++;
+        }
+    }
+
+    if (found) return &devs[select];
+
+    print("[DISK] No connected drives are of type PATA or SATA\n\r");
+    asm("cli");
+    for (;;);
 }
 
 namespace VGASELECT {
@@ -234,6 +273,12 @@ extern "C" void main() {
     asm("cli");
     init_idt();
     PIT::init_timer();
+
+    device_t boot_disk = device_t(0x1f0,0x3f6,0xA0,"");
+    init_disk(&boot_disk);
+    uint8_t* rest_of_kernel = (uint8_t*)0x18000;
+    read_disk(&boot_disk,rest_of_kernel,131,(uint64_t)kernel_sectors);
+
 #ifdef RUN_VGASELECT
     VGASELECT::run();
 #endif
@@ -260,13 +305,11 @@ extern "C" void main() {
         for (;;);
     }
     
-    device_t disk = init_disk();
-
     VFS::install_vfs();
-    USTAR::ustar_t tar = USTAR::ustar_t(&disk,2,1);
-    tar.mount("/boot/");
+    device_t* disk = devdup(init_disk());
 
     ACPI::enable_acpi();
+    print("[KERNEL] init done\n\r");
     fork((void*)taskA);
     fork((void*)taskB);
     yield();
