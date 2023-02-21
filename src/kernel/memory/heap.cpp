@@ -119,9 +119,10 @@ namespace heap {
         if (next == last_seg) last_seg = this;
         if (next->next != NULL) next->next->prev = this;
         size = size + next->size + sizeof(heap_seg_header_t);
+        next = next->next;
     }
     
     void heap_seg_header_t::combine_backward() {
-        if (prev != NULL && prev->free) prev->combine_forward();
+        if (prev != NULL) if (prev->free) prev->combine_forward();
     }
 }
