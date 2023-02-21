@@ -91,61 +91,6 @@ void unlock_old_page_tables(void) {
     free_pages((void*)&_end_all,7);
 }
 
-void reserve_page(void* addr) {
-    if (memory_map.get(align_to_start((uint64_t)addr,0x1000)/0x1000)) return;
-    memory_map.set(align_to_start((uint64_t)addr,0x1000)/0x1000,1);
-    reserved_mem += 0x1000;
-    free_mem -= 0x1000;
-}
-
-void unreserve_page(void* addr) {
-    if (!memory_map.get(align_to_start((uint64_t)addr,0x1000)/0x1000)) return;
-    memory_map.set(align_to_start((uint64_t)addr,0x1000)/0x1000,0);
-    reserved_mem -= 0x1000;
-    free_mem += 0x1000;
-}
-
-void reserve_pages(void* addr, uint64_t count) {
-    for (uint64_t i = 0; i < count; i++) {
-        reserve_page((void*)((uint64_t)addr+i*0x1000));
-    }
-}
-
-void unreserve_pages(void* addr, uint64_t count) {
-    for (uint64_t i = 0; i < count; i++) {
-        unreserve_page((void*)((uint64_t)addr+i*0x1000));
-    }
-}
-void lock_page(void* addr) {
-    uint64_t index = align_to_start((uint64_t)addr,0x1000)/0x1000;
-    if ((uint64_t)addr >= get_memory_size()) {printf("[MEMORY] Outside of physical memory: lock\n\r%t");asm("cli");for(;;);}
-    if (memory_map.get(index)) return;
-    memory_map.set(index,1);
-    used_mem += 0x1000;
-    free_mem -= 0x1000;
-}
-
-void free_page(void* addr) {
-    uint64_t index = align_to_start((uint64_t)addr,0x1000)/0x1000;
-    if ((uint64_t)addr >= get_memory_size()) {printf("[MEMORY] Outside of physical memory: free\n\r%t");asm("cli");for(;;);}
-    if (memory_map.get(index)) return;
-    memory_map.set(index,0);
-    used_mem -= 0x1000;
-    free_mem += 0x1000;
-}
-
-void lock_pages(void* addr, uint64_t count) {
-    for (uint64_t i = 0; i < count; i++) {
-        lock_page((void*)((uint64_t)addr+i*0x1000));
-    }
-}
-
-void free_pages(void* addr, uint64_t count) {
-    for (uint64_t i = 0; i < count; i++) {
-        free_page((void*)((uint64_t)addr+i*0x1000));
-    }
-}
-
 void memset(void* addr, uint8_t sval, uint64_t count) {
     if(!count){return;} // nothing to set?
     uint64_t val = (sval & 0xFF); // create a 64-bit version of 'sval'
@@ -224,6 +169,63 @@ void* request_pages(uint64_t count) {
         page_bitmap_index += i;
     }
     return NULL; // Page Frame Swap to file
+}
+
+void reserve_page(void* addr) {
+    if (memory_map.get(align_to_start((uint64_t)addr,0x1000)/0x1000)) return;
+    memory_map.set(align_to_start((uint64_t)addr,0x1000)/0x1000,1);
+    reserved_mem += 0x1000;
+    free_mem -= 0x1000;
+}
+
+void unreserve_page(void* addr) {
+    if (((uint64_t)addr/0x1000) < page_bitmap_index) page_bitmap_index = (uint64_t)addr/0x1000;
+    if (!memory_map.get(align_to_start((uint64_t)addr,0x1000)/0x1000)) return;
+    memory_map.set(align_to_start((uint64_t)addr,0x1000)/0x1000,0);
+    reserved_mem -= 0x1000;
+    free_mem += 0x1000;
+}
+
+void reserve_pages(void* addr, uint64_t count) {
+    for (uint64_t i = 0; i < count; i++) {
+        reserve_page((void*)((uint64_t)addr+i*0x1000));
+    }
+}
+
+void unreserve_pages(void* addr, uint64_t count) {
+    for (uint64_t i = 0; i < count; i++) {
+        unreserve_page((void*)((uint64_t)addr+i*0x1000));
+    }
+}
+void lock_page(void* addr) {
+    uint64_t index = align_to_start((uint64_t)addr,0x1000)/0x1000;
+    if ((uint64_t)addr >= get_memory_size()) {printf("[MEMORY] Outside of physical memory: lock\n\r%t");asm("cli");for(;;);}
+    if (memory_map.get(index)) return;
+    memory_map.set(index,1);
+    used_mem += 0x1000;
+    free_mem -= 0x1000;
+}
+
+void free_page(void* addr) {
+    if (((uint64_t)addr/0x1000) < page_bitmap_index) page_bitmap_index = (uint64_t)addr/0x1000;
+    uint64_t index = align_to_start((uint64_t)addr,0x1000)/0x1000;
+    if ((uint64_t)addr >= get_memory_size()) {printf("[MEMORY] Outside of physical memory: free\n\r%t");asm("cli");for(;;);}
+    if (memory_map.get(index)) return;
+    memory_map.set(index,0);
+    used_mem -= 0x1000;
+    free_mem += 0x1000;
+}
+
+void lock_pages(void* addr, uint64_t count) {
+    for (uint64_t i = 0; i < count; i++) {
+        lock_page((void*)((uint64_t)addr+i*0x1000));
+    }
+}
+
+void free_pages(void* addr, uint64_t count) {
+    for (uint64_t i = 0; i < count; i++) {
+        free_page((void*)((uint64_t)addr+i*0x1000));
+    }
 }
 
 page_index::page_index(uint64_t addr) {
