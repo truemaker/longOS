@@ -273,7 +273,7 @@ void printc(char c) {
         default:
             *(VGA_MEM+vga_pos*2) = c;
             vga_pos++;
-            if (vga_pos > VGA_WIDTH*VGA_HEIGHT) set_cursor_pos(vga_pos);
+            if (vga_pos >= VGA_WIDTH*VGA_HEIGHT) set_cursor_pos(vga_pos);
     }
 #ifdef DEBUG_SERIAL
     serial::write_serial(c);
