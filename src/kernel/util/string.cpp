@@ -54,6 +54,7 @@ uint16_t udigits(uint64_t i, uint64_t base) {
 char* uitos(uint64_t i, uint64_t base) {
 	if (base > 10) { print("[STRING] base > 10 is not supported yet\n\r"); return 0; }
 	if (base == 1) { print("[STRING] base == 1 is illegal\n\r"); return 0; }
+	if (i == 0) return strdup("0");
 	uint64_t d = udigits(i,base);
 	char* s = (char*)heap::malloc(d+1);
 	uint64_t v = i;
@@ -67,8 +68,8 @@ char* uitos(uint64_t i, uint64_t base) {
 
 char* strcat(char* a, char* b) {
 	char* s = (char*)heap::malloc(strlen(a)+strlen(b)+1);
-	strcpy(s,a);
-	strcpy(s+strlen(a),b);
+	memcpy(s,a,strlen(a));
+	memcpy(s+strlen(a),b,strlen(b));
 	s[strlen(a)+strlen(b)] = 0;
 	return s;
 }

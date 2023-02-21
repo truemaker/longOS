@@ -153,7 +153,7 @@ void* request_page() {
         lock_page((void*)(page_bitmap_index * 4096));
         return (void*)(page_bitmap_index * 4096);
     }
-    return NULL; // Page Frame Swap to file
+    return NULL;
 }
 
 void* request_pages(uint64_t count) {
@@ -168,7 +168,7 @@ void* request_pages(uint64_t count) {
         }
         page_bitmap_index += i;
     }
-    return NULL; // Page Frame Swap to file
+    return NULL;
 }
 
 void reserve_page(void* addr) {
