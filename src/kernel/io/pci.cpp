@@ -1,6 +1,9 @@
 #include <pci.h>
 #include <vga.h>
 #include <io.h>
+#include <vfs.h>
+#include <string.h>
+#include <heap.h>
 
 namespace PCI {
     char* device_class_names[] = {
@@ -267,5 +270,62 @@ namespace PCI {
         print_device_type(dclass,dsubclass,prog_if);
         //print(device_class_names[dclass]);
         new_line();
+    }
+
+    void iterate_pci(void) {
+        uint8_t function;
+        uint8_t bus;
+        uint16_t headerType = read_config_word(0, 0, 0, 0xC);
+        if ((headerType & 0x80) == 0) {
+            iterate_bus(0);
+        } else {
+            for (function = 0; function < 8; function++) {
+                if (read_config_word(0, 0, function,0x2) != 0xFFFF) break;
+                bus = function;
+                iterate_bus(bus);
+            }
+        }
+    }
+
+    void iterate_bus(uint8_t bus) {
+        uint8_t device;
+        for (device = 0; device < 32; device++) {
+            iterate_device(bus, device);
+        }
+    }
+
+    void iterate_device(uint8_t bus, uint8_t device) {
+        uint8_t function;
+        for (function = 0; function < 8; function++) {
+            iterate_function(bus, device, function);
+        }
+    }
+
+    pci_device_t* create_pci_device_base(uint8_t bus, uint8_t device, uint8_t func, pci_device_t* out) {
+        return out;
+    }
+
+    header0_pci_device_t* create_pcih0_device(uint8_t bus, uint8_t device, uint8_t func, header0_pci_device_t* out) {
+        return out;
+    }
+
+    pci_device_t* create_pci_device(uint8_t bus, uint8_t device, uint8_t func) {
+        uint8_t header_type = read_config_word(bus,device,func,0xC)&0x00ff;
+        pci_device_t* dev = (pci_device_t*)heap::malloc(sizeof(pci_device_t));
+        dev = create_pci_device_base(bus,device,func,dev);
+        dev->bus = bus;
+        dev->device = device;
+        dev->function = func;
+    }
+
+    uint64_t devices = 0;
+    void iterate_function(uint8_t bus, uint8_t device, uint8_t func) {
+        if (read_config_word(bus,device,func,0x2) == 0xFFFF) return;
+        if (read_config_word(bus,device,func,0x0) == 0x0000) return;
+        if (read_config_word(bus,device,func,0x0) == 0xFFFF) return;
+        pci_device_t* pci_dev = create_pci_device(bus,device,func);
+        VFS::add_device(pci_dev,strcat("/dev/pci",uitos(devices,10)));
+        //print(strcat("/dev/pci",uitos(devices,10))); new_line();
+        devices++; //for (;;);
     }
 }
