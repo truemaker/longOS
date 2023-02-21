@@ -109,7 +109,8 @@ device_t* init_disk(void) {
     uint64_t cd = 0;
     uint64_t select = 0;
     for (uint64_t i = 0; i < 4; i++) {
-        init_disk(&devs[i]);if (devs[i].type == DEV_PATAPI || devs[i].type == DEV_SATAPI) {
+        init_disk(&devs[i]);
+        if (devs[i].type == DEV_PATAPI || devs[i].type == DEV_SATAPI) {
             printf("[KERNEL] Found %sPI drive\n\r",devs[i].type == DEV_PATAPI ? "PATA" : "SATA");
             VFS::add_device(devdup(&devs[i]),cd_names[cd]);
             cd++;
