@@ -2,6 +2,8 @@
 /* Debug Configuration */
 //#define DEBUG
 //#define DEBUG_SERIAL
+/* Minimal mode */
+//#define MINIMAL_MODE
 /* VGASELECT Configuration */
 //#define RUN_VGASELECT
 //#define VGASELECT_INSTANT_SELECT

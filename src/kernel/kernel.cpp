@@ -284,11 +284,13 @@ extern "C" void main() {
     VGASELECT::run();
 #endif
 
+#ifndef MINIMAL_MODE
     if (serial::init_serial()) {
         printf("[SERIAL] Failed to init serial");
         return;
     }
     serial::write_serial("Just passing by.\n\r",18);
+#endif
     printf("Welcome to %s %s\n\r","longOS","dev snapshot");
     PCSPK::beep();
     
@@ -296,8 +298,10 @@ extern "C" void main() {
     print_memory();
 
     init_paging();
+#ifndef MINIMAL_MODE
     ACPI::init_acpi();
     init_task();
+#endif
     heap::init_heap((void*)0x0000100000000000,0x10);
 
     if (!test_heap()) {
@@ -306,23 +310,29 @@ extern "C" void main() {
         for (;;);
     }
     
+#ifndef MINIMAL_MODE
     VFS::install_vfs();
     device_t* disk = devdup(init_disk());
 
     ACPI::enable_acpi();
     //PCI::iterate_pci();
+#endif
     print("[KERNEL] init done\n\r");
+#ifndef MINIMAL_MODE
     fork((void*)taskA);
     fork((void*)taskB);
     yield();
     print("[KERNEL] Hello from kernel\n\r");
+#endif
     while (1) {
         uint64_t time = PIT::millis_since_boot;
         clear_line();
         printf("Time since boot: %x:%x:%x.%x",((time / 1000)/60)/60,((time / 1000)/60)%60,(time / 1000)%60,time % 1000);
         PIT::sleep(10);
     }
+#ifndef MINIMAL_MODE
     ACPI::shutdown();
+#endif
 
     while (1) {
         asm("hlt");
