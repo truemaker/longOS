@@ -8,7 +8,7 @@ proc_t* current;
 bool task_switch_in_progress;
 bool task_creation_in_progress;
 uint64_t next_pid;
-bool in_kernel;
+bool in_kernel = true;
 
 void _stack_error() {
     print("[TASK] Stack error\n\r");
@@ -93,11 +93,11 @@ void switch_task() {
         if (current->state == proc_running) break;
         current = current->next;
     }
+    if (current == &main_proc) in_kernel = true;
+    else in_kernel = false;
     if (current->state != proc_running) {
         if (last->state != proc_exit) last->state = proc_idle;
         current->state = proc_running;
-        if (current == &main_proc) in_kernel = true;
-        else in_kernel = false;
         debugf("Initiating switch\n\r");
         _task_switch(&last->rsp,&current->rsp);
         debugf("Switch done\n\r");
