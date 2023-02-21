@@ -69,7 +69,7 @@ void reset_device(device_t* dev) {
     print("[DISK] Resetting drive...\n\r");
     uint8_t dctl = inb(dev->dev_ctl);
     outb(dev->dev_ctl, dctl | 4);
-    PIT::sleep(10);
+    PIT::sleep(100);
     dctl &= ~4;
     outb(dev->dev_ctl, dctl);
     PIT::sleep(10);
@@ -104,9 +104,9 @@ bool wait_disk_ready(device_t* dev) {
     timer_t t;
     PIT::start_timer(&t);
     while (stat & (1 << 7) && !PIT::timer_expired(t,400)) stat = inb(dev->dev_ctl);
-    if (inb(dev->dev_ctl) & 0x01) { print("[DISK] drive error!\n\r"); reset_device(dev); return true; }
+    if (inb(dev->dev_ctl) & 0x01) { printf("[DISK] drive error code %h\n\r",inb(dev->base+DEV_OFF_ERR)); disk_errors++; reset_device(dev); return true; }
     while (!(stat & (1 << 3)) && !PIT::timer_expired(t,400)) stat = inb(dev->dev_ctl);
-    if (inb(dev->dev_ctl) & 0x01) { print("[DISK] drive error!\n\r"); reset_device(dev); return true; }
+    if (inb(dev->dev_ctl) & 0x01) { printf("[DISK] drive error code %h\n\r",inb(dev->base+DEV_OFF_ERR)); disk_errors++; reset_device(dev); return true; }
     if (PIT::timer_expired(t,400)) { reset_device(dev); return true; }
     return false;
 }

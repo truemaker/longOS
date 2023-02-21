@@ -39,6 +39,8 @@ namespace VFS_TREE {
         parent->childs++;
     }
     VFS::vfs_tree_node_t* get_child(VFS::vfs_tree_node_t* parent, char* name) {
+        if (!parent) return 0;
+        if (!name) return 0;
         VFS::vfs_tree_node_t* current = parent->children;
         while (current) {
             if (!current->value) { current = current->next; continue; }
