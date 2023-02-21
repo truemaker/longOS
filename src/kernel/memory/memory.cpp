@@ -153,6 +153,9 @@ void* request_page() {
         lock_page((void*)(page_bitmap_index * 4096));
         return (void*)(page_bitmap_index * 4096);
     }
+    print("[MEMORY] Out of memory");
+    asm("cli");
+    for (;;);
     return NULL;
 }
 
@@ -168,6 +171,9 @@ void* request_pages(uint64_t count) {
         }
         page_bitmap_index += i;
     }
+    print("[MEMORY] Out of memory");
+    asm("cli");
+    for (;;);
     return NULL;
 }
 

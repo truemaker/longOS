@@ -5,6 +5,7 @@
 #include <memory.h>
 #include <serial.h>
 #include <debug.h>
+#include <task.h>
 
 
 void(*main_keyboard_handler)(uint8_t scan_code);
@@ -61,6 +62,7 @@ __attribute__((interrupt)) void pagef_handler(interrupt_frame_t* int_frame) {
     asm("cli");
     if (nested_errors) for (;;);
     nested_errors++;
+    if (!in_kernel) { nested_errors--; quit(); }
     printf("A page fault has occured\n\rFault address: %h\n\rPML4: %h\n\rRIP: %h", read_cr2(), read_cr3(),int_frame->rip);
     print("\n\rReadable Message: ");
     uint64_t err = int_frame->err_code;
@@ -91,6 +93,7 @@ __attribute__((interrupt)) void doublef_handler(interrupt_frame_t* int_frame) {
 }
 
 __attribute__((interrupt)) void ssf_handler(interrupt_frame_t* int_frame) {
+    if (!in_kernel) quit();
     asm("cli");
     print("A stack-segment fault has occured!");
     for (;;);
@@ -100,6 +103,7 @@ __attribute__((interrupt)) void gpf_handler(interrupt_frame_t* int_frame) {
     asm("cli");
     if (nested_errors) for (;;);
     nested_errors++;
+    if (!in_kernel) { nested_errors--; quit(); }
     printf("A general protection fault has occured\n\rCS: %h\n\rRIP: %h\n\rRSP: %h\n\r",int_frame->cs,int_frame->rip,int_frame->rsp >> 32);
     trace(10,(struct stackframe*)__builtin_frame_address(0));
     print("Readable Message: ");

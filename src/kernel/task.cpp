@@ -8,11 +8,12 @@ proc_t* current;
 bool task_switch_in_progress;
 bool task_creation_in_progress;
 uint64_t next_pid;
+bool in_kernel;
 
 void _stack_error() {
     print("[TASK] Stack error\n\r");
     // TODO: Destroy process
-    for (;;);
+    while (1) yield();
 }
 
 #define PUSH(x,y) *x = y; x--;
@@ -93,8 +94,10 @@ void switch_task() {
         current = current->next;
     }
     if (current->state != proc_running) {
-        last->state = proc_idle;
+        if (last->state != proc_exit) last->state = proc_idle;
         current->state = proc_running;
+        if (current == &main_proc) in_kernel = true;
+        else in_kernel = false;
         debugf("Initiating switch\n\r");
         _task_switch(&last->rsp,&current->rsp);
         debugf("Switch done\n\r");
@@ -106,4 +109,9 @@ proc_t* fork(void* entry) {
     proc_t* task = (proc_t*)heap::malloc(sizeof(proc_t));
     _create_task(task,entry);
     return task;
+}
+
+void quit(void) {
+    current->state = proc_exit;
+    yield();
 }
