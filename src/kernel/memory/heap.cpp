@@ -45,7 +45,7 @@ namespace heap {
         while (true) {
             if (seg->free) {
                 debugf("Found free segment checking for %x bytes\n\r",size);
-                if (seg->size > (size + 0x30)) {
+                if (seg->size > (size + sizeof(heap_seg_header_t))) {
                     seg->split(size);
                     seg->free = false;
                     debugf("Alloc %h %h\n\r",seg,size);
@@ -80,6 +80,7 @@ namespace heap {
         size_t splitSize = this->size - size - sizeof(heap_seg_header_t);
         if (splitSize <  0x10) return NULL;
         heap_seg_header_t* new_seg = (heap_seg_header_t*)((size_t)this+size+sizeof(heap_seg_header_t));
+
         next->prev = new_seg;
         new_seg->next = next;
         next = new_seg;
@@ -111,6 +112,7 @@ namespace heap {
         new_seg->next = NULL;
         new_seg->size = size-sizeof(heap_seg_header_t);
         new_seg->combine_backward();
+        printf("[HEAP] Expanded by %x pages\n\r",pages);
     }
     
     void heap_seg_header_t::combine_forward() {
