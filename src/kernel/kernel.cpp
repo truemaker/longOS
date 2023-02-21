@@ -310,6 +310,7 @@ extern "C" void main() {
     device_t* disk = devdup(init_disk());
 
     ACPI::enable_acpi();
+    //PCI::iterate_pci();
     print("[KERNEL] init done\n\r");
     fork((void*)taskA);
     fork((void*)taskB);
