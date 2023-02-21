@@ -177,7 +177,7 @@ void print_mbr(mbr_t* mbr) {
 }
 
 device_t* devdup(device_t* dev) {
-    device_t* dup = (device_t*)heap::malloc(sizeof(dev));
-    memcpy(dup,dev,sizeof(dev));
+    device_t* dup = (device_t*)heap::malloc(sizeof(device_t));
+    memcpy(dup,dev,sizeof(device_t));
     return dup;
 }
