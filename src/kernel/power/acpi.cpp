@@ -3,6 +3,8 @@
 #include <memory.h>
 #include <io.h>
 #include <timer.h>
+#include <vfs.h>
+#include <string.h>
 
 namespace ACPI {
     bool extended = false;
@@ -279,6 +281,20 @@ namespace ACPI {
         if (memcmp(header->signature,(void*)"HPET",4)) print_hpet_table(header);
     }
 
+    void add_hpet_table(sdt_header_t* header) {
+        hpet_t* hpet = (hpet_t*)header;
+        printf("[ACPI] Adding HPET %x", hpet->hpet_number);
+        VFS::add_device(hpet,strcat("/dev/hpet",uitos(hpet->hpet_number,10)));
+    }
+
+    void add_apic_table(sdt_header_t* header) {
+    }
+
+    void add_hardware_table(sdt_header_t* header) {
+        if (memcmp(header->signature,(void*)"APIC",4)) add_apic_table(header);
+        if (memcmp(header->signature,(void*)"HPET",4)) add_hpet_table(header);
+    }
+
     void detect_hardware(void) {
         sdt_header_t* header = sdt;
         uint64_t entry_size = extended ? 8 : 4;
@@ -288,7 +304,7 @@ namespace ACPI {
             if (entry_size == 4) new_addr = (new_addr & 0xffffffff);
             sdt_header_t* new_table = (sdt_header_t*)new_addr;
             if (!validate_sdt(new_table)) { print("Invalid SDT."); asm("cli"); for(;;); }
-            if (is_hardware_table(new_table)) print_hardware_table(new_table);
+            if (is_hardware_table(new_table)) add_hardware_table(new_table);//print_hardware_table(new_table);
         }
     }
 }

@@ -315,6 +315,7 @@ extern "C" void main() {
     device_t* disk = devdup(init_disk());
 
     ACPI::enable_acpi();
+    //ACPI::detect_hardware();
     //PCI::iterate_pci();
 #endif
     print("[KERNEL] init done\n\r");

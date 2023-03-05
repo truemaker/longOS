@@ -53,6 +53,20 @@ namespace ACPI {
         uint32_t *ptr2sdt;
     } __attribute__((packed)) xsdt_t;
 
+    typedef struct hpet {
+        sdt_header_t header;
+        uint8_t hardware_rev_id;
+        uint8_t comparator_count:5;
+        uint8_t counter_size:1;
+        uint8_t reserved:1;
+        uint8_t legacy_replacement:1;
+        uint16_t pci_vendor_id;
+        acpi_address_t address;
+        uint8_t hpet_number;
+        uint16_t minimum_tick;
+        uint8_t page_protection;
+    } __attribute__((packed)) hpet_t;
+
     typedef struct fadt {
         sdt_header_t header;
         uint32_t firmare_ctrl;
