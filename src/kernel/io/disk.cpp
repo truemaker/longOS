@@ -101,6 +101,7 @@ uint64_t disk_errors = 0;
 bool wait_disk_ready(device_t* dev) {
     if (disk_errors > 5) { print("Disk operation failed too many times aborting!"); asm("cli"); for (;;); }
     uint8_t stat = inb(dev->dev_ctl);
+    if (stat == 0xff) { print("[DISK] Floating bus reinit...\n\r"); init_disk(dev); return true; }
     timer_t t;
     PIT::start_timer(&t);
     while (stat & (1 << 7) && !PIT::timer_expired(t,400)) stat = inb(dev->dev_ctl);
