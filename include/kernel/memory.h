@@ -23,7 +23,8 @@ typedef struct pd_entry {
     bool ignore0 : 1;
     bool lp : 1;
     bool ignore1 : 1;
-    uint8_t avl : 3;
+    bool used : 1;
+    uint8_t avl : 2;
     uint64_t addr : 51;
     bool ne : 1;
 } pd_entry_t;
@@ -43,7 +44,6 @@ typedef struct page_index {
 typedef struct ptm {
     ptm(pt_t* pml4In, uint64_t page_count);
     pt_t* pml4;
-    bitmap_t vmmap;
     uint64_t size;
     bool allocating;
     void map(void* vmem, void* pmem);
@@ -58,6 +58,10 @@ typedef struct ptm {
     void free_pages(void*,uint64_t);
     void* find_free(uint64_t);
     bool is_used(void*);
+    pd_entry_t* get_pdp(void*);
+    pd_entry_t* get_pd(void*);
+    pd_entry_t* get_pt(void*);
+    pd_entry_t* get_page(void*);
 } ptm_t;
 
 void print_memory(void);

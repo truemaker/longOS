@@ -41,12 +41,6 @@ SECTIONS {
         
     }
     end_code = .;
-    .idt BLOCK(0x1000) : ALIGN(0x1000) {
-        _idt = .;
-    }
-
-    . = _idt + 0x1000;
-
     .data : ALIGN(0x1000) {
         *(.data)
     }
@@ -57,6 +51,11 @@ SECTIONS {
         *(COMMON)
         *(.bss)
     }
+    .idt BLOCK(0x1000) : ALIGN(0x1000) {
+        _idt = .;
+    }
+
+    . = _idt + 0x1000;
     .mmap : ALIGN(0x1000) {
         _mmap = .;
     }

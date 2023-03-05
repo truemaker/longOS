@@ -248,10 +248,6 @@ page_index::page_index(uint64_t addr) {
 
 ptm_t::ptm(pt_t* pml4In, uint64_t page_count) {
     pml4 = pml4In;
-    vmmap = bitmap_t();
-    vmmap.size = (page_count)/8 + 1;
-    vmmap.bytes = (uint8_t*)request_pages((page_count / 0x1000 / 8 + 1));
-    memset(vmmap.bytes,0,(page_count / 0x1000 / 8 + 1)*0x1000);
     size = page_count;
 }
 
@@ -417,32 +413,70 @@ void* ptm_t::get_paddr(void* vaddr) {
     return (void*)((pde.addr << 12) + offset);
 }
 
+pd_entry_t* ptm_t::get_pdp(void* addr) {
+    page_index_t idx = page_index_t((uint64_t)addr);
+    return &pml4->entries[idx.pdp_i];
+}
+
+pd_entry_t* ptm_t::get_pd(void* addr) {
+    pd_entry_t* pdpe = get_pdp(addr);
+    if (!pdpe) return 0;
+    if (!pdpe->p) return 0;
+    page_index_t idx = page_index_t((uint64_t)addr);
+    pt_t* pdp = (pt_t*)pdpe->addr;
+    return &pdp->entries[idx.p_i];
+}
+
+pd_entry_t* ptm_t::get_pt(void* addr) {
+    pd_entry_t* pde = get_pd(addr);
+    if (!pde) return 0;
+    if (!pde->p) return 0;
+    page_index_t idx = page_index_t((uint64_t)addr);
+    pt_t* pd = (pt_t*)pde->addr;
+    return &pd->entries[idx.pt_i];
+}
+
+pd_entry_t* ptm_t::get_page(void* addr) {
+    if (!get_present(addr)) return 0;
+    pd_entry_t* pte = get_pt(addr);
+    if (!pte) return 0;
+    page_index_t idx = page_index_t((uint64_t)addr);
+    pt_t* pt = (pt_t*)pte->addr;
+    return &pt->entries[idx.p_i];
+}
+
 void ptm_t::mark_page_used(void* page) {
-    uint64_t pageIndex = align_to_start((uint64_t)page,0x1000)/0x1000;
-    if (pageIndex >= vmmap.size) return;
-    if (vmmap.get(pageIndex)) return;
-    vmmap.set(pageIndex,1);
+    void* pageAddr = (void*)align_to_start((uint64_t)page,0x1000);
+    if ((uint64_t)pageAddr >= size*0x1000) return;
+    if (!get_present(page)) return;
+    if (!get_page(pageAddr)) return;
+    if (get_page(pageAddr)->used) return;
+    get_page(pageAddr)->used = true;
 }
 
 void ptm_t::mark_page_unused(void* page) {
-    uint64_t pageIndex = align_to_start((uint64_t)page,0x1000)/0x1000;
-    if (pageIndex >= vmmap.size) return;
-    if (!vmmap.get(pageIndex)) return;
-    vmmap.set(pageIndex,0);
+    void* pageAddr = (void*)align_to_start((uint64_t)page,0x1000);
+    if ((uint64_t)pageAddr >= size*0x1000) return;
+    if (!get_present(page)) return;
+    if (!get_page(pageAddr)) return;
+    if (!get_page(pageAddr)->used) return;
+    get_page(pageAddr)->used = false;
 }
 
 bool ptm_t::is_used(void* page) {
-    uint64_t index = (uint64_t)page/0x1000;
-    if (index >= size) return get_present(page);
-    return vmmap.get(index);
+    void* pageAddr = (void*)align_to_start((uint64_t)page,0x1000);
+    if ((uint64_t)pageAddr >= size*0x1000) return false;
+    if (!get_present(page)) return false;
+    if (get_page(pageAddr)->used) return true;
+    return false;
 }
 
 void* ptm_t::allocate_page(void) {
     allocating = true;
     for (uint64_t i = 0; i<size; i++) {
         if (is_used((void*)(i*0x1000))) continue;
-        mark_page_used((void*)(i*0x1000));
         map((void*)(i*0x1000),request_page());
+        mark_page_used((void*)(i*0x1000));
         debugf("PALLOC %h\n\r",i*0x1000);
         allocating = false;
         return (void*)(i*0x1000);
@@ -461,7 +495,7 @@ void ptm_t::free_page(void* page) {
 void* ptm_t::allocate_pages(uint64_t count) {
     debugf("Allocating %x pages\n\r",count);
     uint64_t move_by = 0;
-    for (uint64_t i = 0; i < vmmap.size-count; i+=move_by) {
+    for (uint64_t i = 0; i < size-count; i+=move_by) {
         bool usable = true;
         for (uint64_t j = 0; j < count; j++) {
             if (is_used((void*)((i+j)*0x1000))) {
@@ -484,7 +518,7 @@ void* ptm_t::allocate_pages(uint64_t count) {
 
 void* ptm_t::find_free(uint64_t count) {
     uint64_t move_by = 0;
-    for (uint64_t i = 0; i < vmmap.size-count; i+=move_by) {
+    for (uint64_t i = 0; i < size-count; i+=move_by) {
         bool usable = true;
         for (uint64_t j = 0; j < count; j++) {
             if ((void*)((i+j)*0x1000)) {

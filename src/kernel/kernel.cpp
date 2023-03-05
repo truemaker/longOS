@@ -69,8 +69,8 @@ ptm_t init_paging(void) {
         uint8_t* base = (uint8_t*)mmap[i].base;
         if (mmap[i].type != 1) {
             for (uint64_t j = 0; j < mmap[i].size; j+=0x1000) {
-                pm.mark_page_used(base);
                 pm.map(base,base);
+                pm.mark_page_used(base);
                 base += 0x1000;
             }
         }
