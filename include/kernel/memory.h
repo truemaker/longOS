@@ -62,6 +62,7 @@ typedef struct ptm {
     pd_entry_t* get_pd(void*);
     pd_entry_t* get_pt(void*);
     pd_entry_t* get_page(void*);
+    void print_used();
 } ptm_t;
 
 void print_memory(void);

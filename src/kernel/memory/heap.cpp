@@ -101,8 +101,8 @@ namespace heap {
         size_t pages = size/0x1000;
         heap_seg_header_t* new_seg = (heap_seg_header_t*)heap_end;
         for (size_t i = 0; i < pages; i++) {
-            g_PTM->mark_page_used(heap_end);
             g_PTM->map(heap_end,request_page());
+            g_PTM->mark_page_used(heap_end);
             heap_end = (void*)((size_t)heap_end+0x1000);
         }
         new_seg->free = true;

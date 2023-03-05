@@ -553,3 +553,17 @@ void* index2address(uint64_t pdp_i,uint64_t pd_i,uint64_t pt_i,uint64_t p_i) {
     vaddr <<= 12;
     return (void*)vaddr;
 }
+
+void ptm_t::print_used(void) {
+    const char* unit[] = {"Bytes", "KB", "MB", "GB", "TB", "PB", "EB"};
+
+    uint8_t unitt = 0;
+    uint64_t displayt = size*0x1000;
+
+    while (displayt > 10240 && unitt < 7) {
+        displayt /= 1024;
+        unitt++;
+    }
+
+    printf("[MEMORY] Total virtual memory %x %s\n\r",displayt,unit[unitt]);
+}

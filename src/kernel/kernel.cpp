@@ -54,7 +54,7 @@ bool test_heap(void) {
 ptm_t init_paging(void) {
     pt_t* pml4 = (pt_t*)request_page();
     memset(pml4, 0, 0x1000);
-    ptm_t pm = ptm_t(pml4,get_memory_size()/0x1000);
+    ptm_t pm = ptm_t(pml4,0xffffffffffffffff/0x1000);
     g_PTM = &pm;
     print("[KERNEL] Created PTM and PML4\n\r");
     for (uint64_t i = 0; i < 0x200; i++) {
@@ -323,6 +323,8 @@ extern "C" void main() {
     fork((void*)taskB);
     yield();
     print("[KERNEL] Hello from kernel\n\r");
+    print_segments();
+    g_PTM->print_used();
 #endif
     while (1) {
         uint64_t time = PIT::millis_since_boot;
