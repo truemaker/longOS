@@ -3,6 +3,7 @@
 #include <convert.h>
 #include <string.h>
 #include <vga.h>
+#include <heap.h>
 
 namespace CMOS {
     uint8_t get_register(uint8_t reg) {
@@ -28,7 +29,6 @@ namespace CMOS {
     }
     namespace RTC {
         void wait_update() {
-            while (!(get_register(0xA) & 0x80)) asm("nop");
             while (get_register(0xA) & 0x80) asm("nop");
         }
 
@@ -70,7 +70,25 @@ namespace CMOS {
             } else {
                 year += (CENTURY - 1) * 100;
             }
-            printf("%s:%s:%s %s.%s.%s",uitos(h,10),uitos(m,10,2),uitos(s,10,2),uitos(d,10,2),uitos(M,10,2),uitos(year,10,4));
+            char* minute;
+            char* second;
+            char* day;
+            char* month;
+            char* ystring;
+            char* hour;
+            minute = uitos(m,10,2);
+            second = uitos(s,10,2);
+            day = uitos(d,10,2);
+            month = uitos(M,10,2);
+            ystring = uitos(year,10,4);
+            hour = uitos(h,10);
+            printf("%s:%s:%s %s.%s.%s",hour,minute,second,day,month,ystring);
+            heap::free(minute);
+            heap::free(second);
+            heap::free(day);
+            heap::free(month);
+            heap::free(ystring);
+            heap::free(hour);
         }
     }
 }
