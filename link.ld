@@ -25,6 +25,7 @@ INPUT (
     build/kernel/ustar.o
     build/kernel/vfs.o
     build/kernel/string.o
+    build/kernel/convert.o
 )
 
 OUTPUT (

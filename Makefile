@@ -44,6 +44,7 @@ build: prepare
 	$(GPP) $(KERNEL_ARGS64) "$(SRC_KERNEL)/fs/ustar.cpp" -o "$(BUILD_KERNEL)/ustar.o"
 	$(GPP) $(KERNEL_ARGS64) "$(SRC_KERNEL)/fs/vfs.cpp" -o "$(BUILD_KERNEL)/vfs.o"
 	$(GPP) $(KERNEL_ARGS64) "$(SRC_KERNEL)/util/string.cpp" -o "$(BUILD_KERNEL)/string.o"
+	$(GPP) $(KERNEL_ARGS64) "$(SRC_KERNEL)/util/convert.cpp" -o "$(BUILD_KERNEL)/convert.o"
 	$(LD) -T "link.ld" -Map memory.map
 	tar --create -H ustar --file $(BUILD)/kernel.tar -C $(BUILD_KERNEL) kernel.bin
 	cat $(BUILD_BOOT)/mbr.bin $(BUILD_BOOT)/boot.bin $(BUILD)/kernel.tar > $(BUILD)/OS.bin
