@@ -21,6 +21,7 @@
 #include <typedef.h>
 #include <vfs.h>
 #include <string.h>
+#include <cmos.h>
 
 ptm_t* g_PTM = NULL;
 extern uint64_t _stack;
@@ -329,8 +330,10 @@ extern "C" void main() {
 #endif
     while (1) {
         uint64_t time = PIT::millis_since_boot;
-        clear_line();
-        printf("Time since boot: %x:%x:%x.%x",((time / 1000)/60)/60,((time / 1000)/60)%60,(time / 1000)%60,time % 1000);
+        print("\r");
+        //clear_line();
+        CMOS::RTC::print_time();
+        //printf("Time since boot: %x:%x:%x.%x",((time / 1000)/60)/60,((time / 1000)/60)%60,(time / 1000)%60,time % 1000);
         PIT::sleep(10);
     }
 #ifndef MINIMAL_MODE
