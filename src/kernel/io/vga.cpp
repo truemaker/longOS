@@ -195,11 +195,11 @@ void set_mode(uint64_t wd, uint64_t ht) {
         default: load_registers(g_80x25_text); write_font(g_8x16_font,16); w = 80; h = 25; clear(); printf("[VGA] No mode with width %x.",wd); for (;;);
     }
     w = wd; h = ht;
+    clear();
 }
 
 void init_vga(void) {
     set_mode(90,30);
-    clear();
 }
 
 void clear_down_row(void) {

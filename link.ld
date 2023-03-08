@@ -51,19 +51,22 @@ SECTIONS {
         *(COMMON)
         *(.bss)
     }
-    .idt BLOCK(0x1000) : ALIGN(0x1000) {
-        _idt = .;
-    }
-
-    . = _idt + 0x1000;
-    .mmap : ALIGN(0x1000) {
-        _mmap = .;
-    }
-    . = _mmap + 0x4000;
+    
     .stack : ALIGN(0x1000) {
         _stack_top = .;
     }
     _stack = _stack_top + 0x8000;
     . = _stack;
+    
+    .idt BLOCK(0x1000) : ALIGN(0x1000) {
+        _idt = .;
+    }
+    . = _idt + 0x1000;
+    
+    .mmap : ALIGN(0x1000) {
+        _mmap = .;
+    }
+    . = _mmap + 0x4000;
+    
     _end_all = .;
 }
