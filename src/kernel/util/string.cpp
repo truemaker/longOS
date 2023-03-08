@@ -3,6 +3,7 @@
 #include <typedef.h>
 #include <string.h>
 #include <vga.h>
+#include <maths.h>
 
 size_t strlen(const char * str) {
 	size_t len = 0;
@@ -51,18 +52,20 @@ uint16_t udigits(uint64_t i, uint64_t base) {
 	return d;
 } 
 
-char* uitos(uint64_t i, uint64_t base) {
+char* uitos(uint64_t i, uint64_t base, uint16_t min_digits) {
 	if (base > 10) { print("[STRING] base > 10 is not supported yet\n\r"); return 0; }
 	if (base == 1) { print("[STRING] base == 1 is illegal\n\r"); return 0; }
-	if (i == 0) return strdup("0");
 	uint64_t d = udigits(i,base);
-	char* s = (char*)heap::malloc(d+1);
+	char* s = (char*)heap::malloc(max(d,min_digits)+1);
 	uint64_t v = i;
-	for (uint16_t j = 0; j < d; j++) {
-		s[d-j-1] = (v % base)+'0';
-		v /= base;
+	for (uint16_t j = 0; j < max(d,min_digits); j++) {
+		if (j >= max(d,min_digits)-d) {
+			s[max(d,min_digits)-j-1] = (v % base)+'0';
+			v /= base;
+		}
+		s[max(d,min_digits)-j-1] = '0';
 	}
-	s[d] = 0;
+	s[max(d,min_digits)] = 0;
 	return s;
 }
 
