@@ -59,8 +59,8 @@ char* uitos(uint64_t i, uint64_t base, uint16_t min_digits) {
 	char* s = (char*)heap::malloc(max(d,min_digits)+1);
 	uint64_t v = i;
 	for (uint16_t j = 0; j < max(d,min_digits); j++) {
-		if (j >= max(d,min_digits)-d) {
-			s[max(d,min_digits)-j-1] = (v % base)+'0';
+		if (j < d) {
+			s[(max(d,min_digits))-j-1] = (v % base)+'0';
 			v /= base;
 		} else s[max(d,min_digits)-j-1] = '0';
 	}
