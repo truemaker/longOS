@@ -62,8 +62,7 @@ char* uitos(uint64_t i, uint64_t base, uint16_t min_digits) {
 		if (j >= max(d,min_digits)-d) {
 			s[max(d,min_digits)-j-1] = (v % base)+'0';
 			v /= base;
-		}
-		s[max(d,min_digits)-j-1] = '0';
+		} else s[max(d,min_digits)-j-1] = '0';
 	}
 	s[max(d,min_digits)] = 0;
 	return s;
