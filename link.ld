@@ -26,6 +26,7 @@ INPUT (
     build/kernel/vfs.o
     build/kernel/string.o
     build/kernel/convert.o
+    build/kernel/cmos.o
 )
 
 OUTPUT (
