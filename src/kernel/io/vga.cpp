@@ -93,6 +93,26 @@ unsigned char g_320x200x256[] =
 	0x41, 0x00, 0x0F, 0x00,	0x00
 };
 
+unsigned char g_640x480x16[] =
+{
+/* MISC */
+	0xE3,
+/* SEQ */
+	0x03, 0x01, 0x08, 0x00, 0x06,
+/* CRTC */
+	0x5F, 0x4F, 0x50, 0x82, 0x54, 0x80, 0x0B, 0x3E,
+	0x00, 0x40, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+	0xEA, 0x0C, 0xDF, 0x28, 0x00, 0xE7, 0x04, 0xE3,
+	0xFF,
+/* GC */
+	0x00, 0x00, 0x00, 0x00, 0x03, 0x00, 0x05, 0x0F,
+	0xFF,
+/* AC */
+	0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x14, 0x07,
+	0x38, 0x39, 0x3A, 0x3B, 0x3C, 0x3D, 0x3E, 0x3F,
+	0x01, 0x00, 0x0F, 0x00, 0x00
+}; // 640x480 16 color planar framebuffer at 0xA0000
+
 static void write_pixel8(unsigned x, unsigned y, unsigned c)
 {
 	unsigned wd_in_bytes;
@@ -103,8 +123,36 @@ static void write_pixel8(unsigned x, unsigned y, unsigned c)
 	*(uint8_t*)((uint64_t)VGA_MEM-0x18000+off) = c;
 }
 
+static void write_pixel4p(unsigned x, unsigned y, uint8_t c)
+{
+	*(uint8_t*)(0x35000+x+y*640) = c;
+}
+
+void copy_plane(void* dst, void* src, int plane) {
+    uint8_t pmask = 1 << plane;
+    uint64_t wd_in_bytes = 640 / 8;
+    for (uint64_t y = 0; y < 480; y++) {
+        for (uint64_t x = 0; x < 640; x++) {
+            uint64_t off = wd_in_bytes * y + x / 8;
+            uint8_t c = *(uint8_t*)((uint64_t)src + (640*y+x));
+            uint8_t mask = 0x80 >> (x & 7);
+            if(pmask & c)
+	        	*(uint8_t*)((uint64_t)dst+off) = *(uint8_t*)(dst+off) | mask;
+	        else
+	        	*(uint8_t*)((uint64_t)dst+off) = *(uint8_t*)(dst+off) & ~mask;
+        }
+    }
+}
+
+void write_screen() {
+    for (int i = 0; i < 4; i++) {
+        set_plane(i);
+        copy_plane((void*)0xA0000,(void*)0x35000,i);
+    }
+}
+
 void gclear(uint8_t c=1) {
-    memset(VGA_MEM-0x18000,c,320*200);
+    memset((void*)0x35000,c,640*480);
     set_cursor_pos(0);
 }
 
@@ -156,27 +204,43 @@ void load_registers(uint8_t* regs) {
 }
 
 void print_trans(void) {
-    load_registers(g_320x200x256);
+    load_registers(g_640x480x16);
     gclear(0);
-    uint64_t offset = 135;
-    for (uint64_t i = 0; i<200;i++) {
+    uint64_t offset = 220;
+    for (uint64_t i = 0; i<240;i++) {
         uint64_t j;
-        for (j = 0; j<10;j++) {
-            write_pixel8(j+offset,i,0x0b);
+        for (j = 0; j<40;j++) {
+            write_pixel4p(j+offset,i,FG_LIGHTBLUE);
         }
-        for (; j<20;j++) {
-            write_pixel8(j+offset,i,0x35);
+        for (; j<80;j++) {
+            write_pixel4p(j+offset,i,FG_LIGHTRED);
         }
-        for (; j<30;j++) {
-            write_pixel8(j+offset,i,0x3f);
+        for (; j<120;j++) {
+            write_pixel4p(j+offset,i,FG_WHITE);
         }
-        for (; j<40;j++) {
-            write_pixel8(j+offset,i,0x35);
+        for (; j<160;j++) {
+            write_pixel4p(j+offset,i,FG_LIGHTRED);
         }
-        for (; j<50;j++) {
-            write_pixel8(j+offset,i,0x0b);
+        for (; j<200;j++) {
+            write_pixel4p(j+offset,i,FG_LIGHTBLUE);
         }
     }
+    for (uint64_t i = 240; i<480;i++) {
+        uint64_t j;
+        for (j = 0; j<50;j++) {
+            write_pixel4p(j+offset,i,FG_YELLOW);
+        }
+        for (; j<100;j++) {
+            write_pixel4p(j+offset,i,FG_WHITE);
+        }
+        for (; j<150;j++) {
+            write_pixel4p(j+offset,i,FG_MAGENTA);
+        }
+        for (; j<200;j++) {
+            write_pixel4p(j+offset,i,FG_BLACK);
+        }
+    }
+    write_screen();
 }
 
 void set_mode(uint64_t wd, uint64_t ht) {
@@ -200,6 +264,10 @@ void set_mode(uint64_t wd, uint64_t ht) {
 
 void init_vga(void) {
     set_mode(90,30);
+#ifdef GRAPHICS_TEST
+    print_trans();
+    for (;;);
+#endif
 }
 
 void clear_down_row(void) {
