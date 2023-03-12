@@ -123,7 +123,7 @@ device_t* init_disk(void) {
         }
     }
 
-    if (found) return &devs[select];
+    if (found) return devdup(&devs[select]);
 
     print("[DISK] No connected drives are of type PATA or SATA\n\r");
     asm("cli");
@@ -313,7 +313,7 @@ extern "C" void main() {
     
 #ifndef MINIMAL_MODE
     VFS::install_vfs();
-    device_t* disk = devdup(init_disk());
+    device_t* disk = init_disk();
 
     ACPI::enable_acpi();
     //ACPI::detect_hardware();

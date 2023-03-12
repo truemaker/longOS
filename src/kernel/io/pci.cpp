@@ -316,6 +316,7 @@ namespace PCI {
         dev->bus = bus;
         dev->device = device;
         dev->function = func;
+        return dev;
     }
 
     uint64_t devices = 0;
