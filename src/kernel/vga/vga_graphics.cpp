@@ -19,9 +19,9 @@ void copy_plane(void* dst, void* src, int plane) {
     uint8_t pmask = 1 << plane;
     uint64_t wd_in_bytes = 640 / 8;
     for (uint64_t y = 0; y < 480; y++) {
-        if (*(uint8_t*)(0x7f000+y)) { *(uint8_t*)(0x7f000+y) -= 1; } else { continue; }
+        if (!*(uint8_t*)(0x7f000+y)) { continue; }
         for (uint64_t x = 0; x < 640; x++) {
-            if (*(uint8_t*)(0x7f000+480+x)) { if(y==479) *(uint8_t*)(0x7f000+480+x) -= 1; } else { continue; }
+            if (!*(uint8_t*)(0x7f000+480+x)) { continue; }
             uint64_t off = wd_in_bytes * y + x / 8;
             uint8_t c = *(uint8_t*)((uint64_t)src + (640*y+x));
             uint8_t mask = 0x80 >> (x & 7);
@@ -38,6 +38,7 @@ void write_screen() {
         set_plane(i);
         copy_plane((void*)0xA0000,(void*)0x34000,i);
     }
+    memset((void*)0x7f000,0,480+640);
 }
 
 void gclear(uint8_t c) {

@@ -211,6 +211,7 @@ void enter_graphics() {
     g = true;
     w = 80;
     h = 30;
+    set_cursor_pos(0);
 }
 
 void test_graphics() {

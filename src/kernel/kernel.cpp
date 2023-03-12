@@ -269,6 +269,12 @@ void taskB() {
     yield();
 }
 
+void desktop() {
+    gclear(FG_DARKGRAY);
+    write_screen();
+    for (;;);
+}
+
 extern "C" void main() {
     init_vga();
     init_gdt();
@@ -332,21 +338,22 @@ extern "C" void main() {
     enter_graphics();
     gclear(FG_DARKGRAY);
     write_screen();
-    while (1) {
-        uint64_t time = PIT::millis_since_boot;
-        print("\r");
-        //clear_line();
-        set_cursor_pos(0);
-        CMOS::RTC::print_time();
-        //printf("Time since boot: %x:%x:%x.%x",((time / 1000)/60)/60,((time / 1000)/60)%60,(time / 1000)%60,time % 1000);
-        PIT::sleep(10);
-    }
+    fork((void*)desktop);
+    yield();
+    for (;;);
+    //while (1) {
+    //    uint64_t time = PIT::millis_since_boot;
+    //    print("\r");
+    //    //clear_line();
+    //    set_cursor_pos(0);
+    //    CMOS::RTC::print_time();
+    //    //printf("Time since boot: %x:%x:%x.%x",((time / 1000)/60)/60,((time / 1000)/60)%60,(time / 1000)%60,time % 1000);
+    //    PIT::sleep(10);
+    //}
 #ifndef MINIMAL_MODE
     ACPI::shutdown();
 #endif
 
-    while (1) {
-        asm("hlt");
-    }
+    for (;;) asm("hlt");
     return;
 }
