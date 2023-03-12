@@ -269,14 +269,11 @@ void draw_line(uint64_t x1, uint64_t y1, uint64_t x2, uint64_t y2, uint8_t color
     incy = sign(dy);
     if (dx < 0) dx *= -1;
     if (dy < 0) dy *= -1;
-    if (dx > dy)
-    {
+    if (dx > dy) {
         pdx = incx; pdy = 0;
         ddx = incx; ddy = incy;
         deltaslowdirection = dy;   deltafastdirection = dx;
-    }
-    else
-    {
+    } else {
         pdx = 0;    pdy = incy;
         ddx = incx; ddy = incy;
         deltaslowdirection = dx;   deltafastdirection = dy;
@@ -286,17 +283,13 @@ void draw_line(uint64_t x1, uint64_t y1, uint64_t x2, uint64_t y2, uint8_t color
     err = deltafastdirection / 2;
     write_pixel4p(x,y,color);
 
-    for(t = 0; t < deltafastdirection; ++t)
-    {
+    for(t = 0; t < deltafastdirection; ++t) {
         err -= deltaslowdirection;
-        if(err < 0)
-        {
+        if(err < 0) {
             err += deltafastdirection;
             x += ddx;
             y += ddy;
-        }
-        else
-        {
+        } else {
             x += pdx;
             y += pdy;
         }
