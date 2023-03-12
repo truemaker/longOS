@@ -85,7 +85,7 @@ void convert_mmap_to_bmp(void) {
     lock_pages((void*)&_end_all,7); // Lock old PTs
     lock_pages((void*)&_start_all,((uint64_t)&_end_all - (uint64_t)&_start_all) / 4096); // Lock kernel
     lock_page((void*)MEMORY_MAP); // Lock MMAP
-    lock_pages((void*)0xF0000,0x4B);
+    lock_pages((void*)0x34000,0x4C);
 }
 
 void unlock_old_page_tables(void) {

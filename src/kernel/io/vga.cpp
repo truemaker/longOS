@@ -7,6 +7,7 @@
 #include <defines.h>
 #include <serial.h>
 #include <timer.h>
+#include <maths.h>
 #include "vga_font.cpp"
 
 uint16_t vga_pos = 0;
@@ -125,14 +126,18 @@ static void write_pixel8(unsigned x, unsigned y, unsigned c)
 
 static void write_pixel4p(unsigned x, unsigned y, uint8_t c)
 {
-	*(uint8_t*)(0x35000+x+y*640) = c;
+	*(uint8_t*)(0x34000+x+y*640) = c;
+    *(uint8_t*)(0x7f000+y) = 4;
+    *(uint8_t*)(0x7f000+480+x) = 4;
 }
 
 void copy_plane(void* dst, void* src, int plane) {
     uint8_t pmask = 1 << plane;
     uint64_t wd_in_bytes = 640 / 8;
     for (uint64_t y = 0; y < 480; y++) {
+        if (*(uint8_t*)(0x7f000+y)) { *(uint8_t*)(0x7f000+y) -= 1; } else { continue; }
         for (uint64_t x = 0; x < 640; x++) {
+            if (*(uint8_t*)(0x7f000+480+x)) { if(y==479) *(uint8_t*)(0x7f000+480+x) -= 1; } else { continue; }
             uint64_t off = wd_in_bytes * y + x / 8;
             uint8_t c = *(uint8_t*)((uint64_t)src + (640*y+x));
             uint8_t mask = 0x80 >> (x & 7);
@@ -147,12 +152,13 @@ void copy_plane(void* dst, void* src, int plane) {
 void write_screen() {
     for (int i = 0; i < 4; i++) {
         set_plane(i);
-        copy_plane((void*)0xA0000,(void*)0x35000,i);
+        copy_plane((void*)0xA0000,(void*)0x34000,i);
     }
 }
 
 void gclear(uint8_t c=1) {
-    memset((void*)0x35000,c,640*480);
+    memset((void*)0x34000,c,640*480);
+    memset((void*)0x7f000,4,480+640);
     set_cursor_pos(0);
 }
 
@@ -243,6 +249,88 @@ void print_trans(void) {
     write_screen();
 }
 
+void draw_font(uint64_t x, uint64_t y, uint8_t index, uint8_t* font, uint8_t font_height, uint8_t background = 0x00, uint8_t foreground = 0xff) {
+    uint8_t* character = (uint8_t*)((uint64_t)font+font_height*index);
+    for (uint8_t font_y = 0; font_y < font_height; font_y++) {
+        for (uint8_t draw_x = 0; draw_x < 8; draw_x++) {
+            uint8_t color = background;
+            if ((0x80 >> draw_x)&*character) color = foreground;
+            write_pixel4p(x+draw_x,y+font_y,color);
+        }
+        character++;
+    }
+}
+
+void draw_line(uint64_t x1, uint64_t y1, uint64_t x2, uint64_t y2, uint8_t color) {
+    int x, y, t, dx, dy, incx, incy, pdx, pdy, ddx, ddy, deltaslowdirection, deltafastdirection, err;
+    dx = x2-x1;
+    dy = y2-y1;
+    incx = sign(dx);
+    incy = sign(dy);
+    if (dx < 0) dx *= -1;
+    if (dy < 0) dy *= -1;
+    if (dx > dy)
+    {
+        pdx = incx; pdy = 0;
+        ddx = incx; ddy = incy;
+        deltaslowdirection = dy;   deltafastdirection = dx;
+    }
+    else
+    {
+        pdx = 0;    pdy = incy;
+        ddx = incx; ddy = incy;
+        deltaslowdirection = dx;   deltafastdirection = dy;
+    }
+    x = x1;
+    y = y1;
+    err = deltafastdirection / 2;
+    write_pixel4p(x,y,color);
+
+    for(t = 0; t < deltafastdirection; ++t)
+    {
+        err -= deltaslowdirection;
+        if(err < 0)
+        {
+            err += deltafastdirection;
+            x += ddx;
+            y += ddy;
+        }
+        else
+        {
+            x += pdx;
+            y += pdy;
+        }
+        write_pixel4p(x, y, color);
+    }
+}
+
+void test_graphics() {
+    load_registers(g_640x480x16);
+    gclear();
+    write_screen();
+    draw_font(0,0, 'H',g_8x16_font,16,0x1);
+    draw_font(8,0, 'e',g_8x16_font,16,0x1);
+    draw_font(16,0,'l',g_8x16_font,16,0x1);
+    draw_font(24,0,'l',g_8x16_font,16,0x1);
+    draw_font(32,0,'o',g_8x16_font,16,0x1);
+    draw_font(48,0,'W',g_8x16_font,16,0x1);
+    draw_font(56,0,'o',g_8x16_font,16,0x1);
+    draw_font(64,0,'r',g_8x16_font,16,0x1);
+    draw_font(72,0,'l',g_8x16_font,16,0x1);
+    draw_font(80,0,'d',g_8x16_font,16,0x1);
+    draw_font(88,0,'!',g_8x16_font,16,0x1);
+    write_screen();
+    draw_font(96,0,1,g_8x16_font,16,0x1);
+    write_screen();
+    for (uint64_t x = 0; x < 3; x++) {
+        for (uint64_t y = 0; y < 3; y++) {
+            draw_line(30+x*5-5,30+y*5-5,30-x*5-5,30-y*5-5,0xff);
+            draw_line(30-x*5-5,30+y*5-5,30+x*5-5,30-y*5-5,0xff);
+        }
+    }
+    write_screen();
+}
+
 void set_mode(uint64_t wd, uint64_t ht) {
     switch (wd) {
         case 80:
@@ -265,7 +353,8 @@ void set_mode(uint64_t wd, uint64_t ht) {
 void init_vga(void) {
     set_mode(90,30);
 #ifdef GRAPHICS_TEST
-    print_trans();
+    test_graphics();
+    //print_trans();
     for (;;);
 #endif
 }
