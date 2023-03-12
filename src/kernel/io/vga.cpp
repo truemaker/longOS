@@ -297,6 +297,41 @@ void draw_line(uint64_t x1, uint64_t y1, uint64_t x2, uint64_t y2, uint8_t color
     }
 }
 
+void draw_circle(int x0, int y0, int radius,uint8_t color) {
+    int f = 1 - radius;
+    int ddF_x = 0;
+    int ddF_y = -2 * radius;
+    int x = 0;
+    int y = radius;
+
+    write_pixel4p(x0, y0 + radius,color);
+    write_pixel4p(x0, y0 - radius,color);
+    write_pixel4p(x0 + radius, y0,color);
+    write_pixel4p(x0 - radius, y0,color);
+
+    while(x < y)
+    {
+        if (f >= 0)
+        {
+            y -= 1;
+            ddF_y += 2;
+            f += ddF_y;
+        }
+        x += 1;
+        ddF_x += 2;
+        f += ddF_x + 1;
+
+        write_pixel4p(x0 + x, y0 + y,color);
+        write_pixel4p(x0 - x, y0 + y,color);
+        write_pixel4p(x0 + x, y0 - y,color);
+        write_pixel4p(x0 - x, y0 - y,color);
+        write_pixel4p(x0 + y, y0 + x,color);
+        write_pixel4p(x0 - y, y0 + x,color);
+        write_pixel4p(x0 + y, y0 - x,color);
+        write_pixel4p(x0 - y, y0 - x,color);
+    }
+}
+
 void test_graphics() {
     load_registers(g_640x480x16);
     gclear();
@@ -321,6 +356,8 @@ void test_graphics() {
             draw_line(30-x*5-5,30+y*5-5,30+x*5-5,30-y*5-5,0xff);
         }
     }
+    write_screen();
+    draw_circle(400,300,32,0xff);
     write_screen();
 }
 
