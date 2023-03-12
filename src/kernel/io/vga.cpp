@@ -249,16 +249,27 @@ void print_trans(void) {
     write_screen();
 }
 
-void draw_font(uint64_t x, uint64_t y, uint8_t index, uint8_t* font, uint8_t font_height, uint8_t background = 0x00, uint8_t foreground = 0xff) {
+void fill_rect(uint64_t x0, uint64_t y0, uint64_t width, uint64_t height, uint8_t color) {
+    for (uint64_t x = x0; x < x0+width; x++) {
+        for (uint64_t y = y0; y < y0+height; y++) {
+            write_pixel4p(x,y,color);
+        }
+    }
+}
+
+void draw_font_transparent(uint64_t x, uint64_t y, uint8_t index, uint8_t* font, uint8_t font_height, uint8_t foreground = 0xff) {
     uint8_t* character = (uint8_t*)((uint64_t)font+font_height*index);
     for (uint8_t font_y = 0; font_y < font_height; font_y++) {
         for (uint8_t draw_x = 0; draw_x < 8; draw_x++) {
-            uint8_t color = background;
-            if ((0x80 >> draw_x)&*character) color = foreground;
-            write_pixel4p(x+draw_x,y+font_y,color);
+            if ((0x80 >> draw_x)&*character) write_pixel4p(x+draw_x,y+font_y,foreground);
         }
         character++;
     }
+}
+
+void draw_font(uint64_t x, uint64_t y, uint8_t index, uint8_t* font, uint8_t font_height, uint8_t background = 0x00, uint8_t foreground = 0xff) {
+    fill_rect(x,y,8,font_height,background);
+    draw_font_transparent(x,y,index,font,font_height,foreground);
 }
 
 void draw_line(uint64_t x1, uint64_t y1, uint64_t x2, uint64_t y2, uint8_t color) {
@@ -357,10 +368,18 @@ void draw_ellipse(int xm, int ym, int a, int b, uint8_t color)
     }
 }
 
+void draw_rect(uint64_t x0, uint64_t y0, uint64_t width, uint64_t height, uint8_t color) {
+    draw_line(x0,y0,x0+width,y0,color);
+    draw_line(x0,y0,x0,y0+height,color);
+    draw_line(x0+width,y0,x0+width,y0+height,color);
+    draw_line(x0,y0+height,x0+width,y0+height,color);
+}
+
 void test_graphics() {
     load_registers(g_640x480x16);
     gclear();
     write_screen();
+    draw_font(0,0, 1,g_8x16_font,16,0x1);
     draw_font(0,0, 'H',g_8x16_font,16,0x1);
     draw_font(8,0, 'e',g_8x16_font,16,0x1);
     draw_font(16,0,'l',g_8x16_font,16,0x1);
@@ -385,6 +404,11 @@ void test_graphics() {
     draw_circle(400,300,32,0xff);
     write_screen();
     draw_ellipse(100,200,32,16,0xff);
+    write_screen();
+    draw_rect(200,100,64,64,0xff);
+    fill_rect(216,116,32,32,0xff);
+    write_screen();
+    draw_font_transparent(228,124,1,g_8x16_font,16,0x1);
     write_screen();
 }
 
