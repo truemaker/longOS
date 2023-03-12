@@ -332,6 +332,31 @@ void draw_circle(int x0, int y0, int radius,uint8_t color) {
     }
 }
 
+void draw_ellipse(int xm, int ym, int a, int b, uint8_t color)
+{
+    int dx = 0, dy = b;
+    long a2 = a*a, b2 = b*b;
+    long err = b2-(2*b-1)*a2, e2;
+
+    do
+    {
+        write_pixel4p(xm + dx, ym + dy, color);
+        write_pixel4p(xm - dx, ym + dy, color);
+        write_pixel4p(xm - dx, ym - dy, color);
+        write_pixel4p(xm + dx, ym - dy, color);
+        e2 = 2*err;
+        if (e2 <  (2 * dx + 1) * b2) { ++dx; err += (2 * dx + 1) * b2; }
+        if (e2 > -(2 * dy - 1) * a2) { --dy; err -= (2 * dy - 1) * a2; }
+    }
+    while (dy >= 0);
+
+    while (dx++ < a)
+    {
+        write_pixel4p(xm+dx, ym, color);
+        write_pixel4p(xm-dx, ym, color);
+    }
+}
+
 void test_graphics() {
     load_registers(g_640x480x16);
     gclear();
@@ -358,6 +383,8 @@ void test_graphics() {
     }
     write_screen();
     draw_circle(400,300,32,0xff);
+    write_screen();
+    draw_ellipse(100,200,32,16,0xff);
     write_screen();
 }
 
