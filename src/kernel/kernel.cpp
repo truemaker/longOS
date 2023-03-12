@@ -328,10 +328,15 @@ extern "C" void main() {
     print_segments();
     g_PTM->print_used();
 #endif
+    PIT::sleep(1000);
+    enter_graphics();
+    gclear(FG_DARKGRAY);
+    write_screen();
     while (1) {
         uint64_t time = PIT::millis_since_boot;
         print("\r");
         //clear_line();
+        set_cursor_pos(0);
         CMOS::RTC::print_time();
         //printf("Time since boot: %x:%x:%x.%x",((time / 1000)/60)/60,((time / 1000)/60)%60,(time / 1000)%60,time % 1000);
         PIT::sleep(10);

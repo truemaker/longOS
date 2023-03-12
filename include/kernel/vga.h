@@ -78,6 +78,8 @@ enum background_color {
 };
 
 extern uint64_t w,h;
+extern bool g;
+extern uint8_t b;
 
 void set_cursor_pos(uint16_t pos);
 uint16_t coord_from_pos(uint16_t x, uint16_t y);
@@ -100,3 +102,17 @@ void enable_cursor(void);
 extern void write_font(unsigned char *buf, unsigned font_height);
 void clear_line(void);
 void new_line();
+
+// VGA Graphics mode
+void enter_graphics();
+static void write_pixel8(unsigned x, unsigned y, unsigned c);
+static void write_pixel4p(unsigned x, unsigned y, uint8_t c);
+void write_screen();
+void gclear(uint8_t c = 1);
+void fill_rect(uint64_t x0, uint64_t y0, uint64_t width, uint64_t height, uint8_t color);
+void draw_font_transparent(uint64_t x, uint64_t y, uint8_t index, uint8_t* font, uint8_t font_height, uint8_t foreground = 0xff);
+void draw_font(uint64_t x, uint64_t y, uint8_t index, uint8_t* font, uint8_t font_height, uint8_t background = 0x00, uint8_t foreground = 0xff);
+void draw_line(uint64_t x1, uint64_t y1, uint64_t x2, uint64_t y2, uint8_t color);
+void draw_circle(int x0, int y0, int radius,uint8_t color);
+void draw_ellipse(int xm, int ym, int a, int b, uint8_t color);
+void draw_rect(uint64_t x0, uint64_t y0, uint64_t width, uint64_t height, uint8_t color);
