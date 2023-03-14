@@ -77,6 +77,14 @@ enum background_color {
     BG_WHITE           = 0xf0
 };
 
+enum ellipse_type {
+    E_FULL = 0xf,
+    E_1 = 1,
+    E_2 = 2,
+    E_3 = 4,
+    E_4 = 8
+};
+
 extern uint64_t w,h;
 extern bool g;
 extern uint8_t b;
@@ -113,6 +121,6 @@ void fill_rect(uint64_t x0, uint64_t y0, uint64_t width, uint64_t height, uint8_
 void draw_font_transparent(uint64_t x, uint64_t y, uint8_t index, uint8_t* font, uint8_t font_height, uint8_t foreground = 0xff);
 void draw_font(uint64_t x, uint64_t y, uint8_t index, uint8_t* font, uint8_t font_height, uint8_t background = 0x00, uint8_t foreground = 0xff);
 void draw_line(uint64_t x1, uint64_t y1, uint64_t x2, uint64_t y2, uint8_t color);
-void draw_circle(int x0, int y0, int radius,uint8_t color);
-void draw_ellipse(int xm, int ym, int a, int b, uint8_t color);
+void draw_circle(int x0, int y0, int radius,uint8_t color,uint8_t width=1);
+void draw_ellipse(int xm, int ym, int a, int b, uint8_t color,uint8_t type = E_FULL);
 void draw_rect(uint64_t x0, uint64_t y0, uint64_t width, uint64_t height, uint8_t color);

@@ -1,3 +1,4 @@
+#include <vga.h>
 void write_pixel8(unsigned x, unsigned y, unsigned c) {
 	unsigned wd_in_bytes;
 	unsigned off;
@@ -105,7 +106,8 @@ void draw_line(uint64_t x1, uint64_t y1, uint64_t x2, uint64_t y2, uint8_t color
     }
 }
 
-void draw_circle(int x0, int y0, int radius,uint8_t color) {
+void draw_circle(int x0, int y0, int radius,uint8_t color,uint8_t width) {
+    if (width == 0) return;
     int f = 1 - radius;
     int ddF_x = 0;
     int ddF_y = -2 * radius;
@@ -140,7 +142,7 @@ void draw_circle(int x0, int y0, int radius,uint8_t color) {
     }
 }
 
-void draw_ellipse(int xm, int ym, int a, int b, uint8_t color)
+void draw_ellipse(int xm, int ym, int a, int b, uint8_t color,uint8_t type)
 {
     int dx = 0, dy = b;
     long a2 = a*a, b2 = b*b;
@@ -148,10 +150,10 @@ void draw_ellipse(int xm, int ym, int a, int b, uint8_t color)
 
     do
     {
-        write_pixel4p(xm + dx, ym + dy, color);
-        write_pixel4p(xm - dx, ym + dy, color);
-        write_pixel4p(xm - dx, ym - dy, color);
-        write_pixel4p(xm + dx, ym - dy, color);
+        if (E_3 & type) write_pixel4p(xm + dx, ym + dy, color);
+        if (E_4 & type) write_pixel4p(xm - dx, ym + dy, color);
+        if (E_1 & type) write_pixel4p(xm - dx, ym - dy, color);
+        if (E_2 & type) write_pixel4p(xm + dx, ym - dy, color);
         e2 = 2*err;
         if (e2 <  (2 * dx + 1) * b2) { ++dx; err += (2 * dx + 1) * b2; }
         if (e2 > -(2 * dy - 1) * a2) { --dy; err -= (2 * dy - 1) * a2; }
