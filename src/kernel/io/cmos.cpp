@@ -25,7 +25,8 @@ namespace CMOS {
         uint8_t low, high;
         low = get_register(0x30);
         high = get_register(0x31);
-        return (low << 16) | high;
+        total = (low << 16) | high;
+        return total;
     }
     namespace RTC {
         void wait_update() {

@@ -6,6 +6,7 @@
 #include <serial.h>
 #include <debug.h>
 #include <task.h>
+#include <mouse.h>
 
 
 void(*main_keyboard_handler)(uint8_t scan_code);
@@ -17,8 +18,8 @@ void pic_remap(void) {
     a2 = inb(0xA1);
     outb(0x20, 0x11);
     outb(0xA0, 0x11);
-    outb(0x21, 32);
-    outb(0xa1, 40);
+    outb(0x21, 0x20);
+    outb(0xa1, 0x28);
     outb(0x21, 4);
     outb(0xa1, 2);
     outb(0x21, 1);
@@ -38,11 +39,12 @@ void register_interrupt(uint64_t id, uint64_t addr) {
 }
 
 void init_idt(void) {
-    register_interrupt(33, (uint64_t)&isr1);
-    register_interrupt(0xe, (uint64_t)&pagef_handler);
-    register_interrupt(0x8, (uint64_t)&doublef_handler);
-    register_interrupt(0xd, (uint64_t)&gpf_handler);
-    register_interrupt(0xc, (uint64_t)&ssf_handler);
+    register_interrupt(0x21, (uint64_t)&isr1);
+    register_interrupt(0x0e, (uint64_t)&pagef_handler);
+    register_interrupt(0x08, (uint64_t)&doublef_handler);
+    register_interrupt(0x0d, (uint64_t)&gpf_handler);
+    register_interrupt(0x0c, (uint64_t)&ssf_handler);
+    register_interrupt(0x2c,(uint64_t)&mouse_handler);
 
     pic_remap();
     outb(0x21, 0b11111101);
@@ -126,4 +128,11 @@ __attribute__((interrupt)) void gpf_handler(interrupt_frame_t* int_frame) {
     }
     new_line();
     for (;;);
+}
+
+__attribute__((interrupt)) void mouse_handler(interrupt_frame_t* int_frame) {
+    inb(0x60);
+    print("m");
+    outb(0x20,0x20);
+    outb(0xa0, 0x20);
 }

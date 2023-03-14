@@ -8,7 +8,6 @@
 #include <disk.h>
 #include <io.h>
 #include <heap.h>
-#include <font.h>
 #include <acpi.h>
 #include <timer.h>
 #include <asm.h>
@@ -22,6 +21,7 @@
 #include <vfs.h>
 #include <string.h>
 #include <cmos.h>
+#include <mouse.h>
 
 ptm_t* g_PTM = NULL;
 extern uint64_t _stack;
@@ -82,17 +82,17 @@ ptm_t init_paging(void) {
 }
 
 char* cd_names[] {
-    "/dev/cda",
-    "/dev/cdb",
-    "/dev/cdc",
-    "/dev/cdd"
+    (char*)"/dev/cda",
+    (char*)"/dev/cdb",
+    (char*)"/dev/cdc",
+    (char*)"/dev/cdd"
 };
 
 char* hd_names[] {
-    "/dev/hda",
-    "/dev/hdb",
-    "/dev/hdc",
-    "/dev/hdd"
+    (char*)"/dev/hda",
+    (char*)"/dev/hdb",
+    (char*)"/dev/hdc",
+    (char*)"/dev/hdd"
 };
 
 device_t* init_disk(void) {
@@ -100,10 +100,10 @@ device_t* init_disk(void) {
 
     device_t devs[4];
 
-    devs[0] = device_t(0x1f0,0x1f6,0xA0,"Disk 1");
-    devs[1] = device_t(0x1f0,0x1f6,0xB0,"Disk 2");
-    devs[2] = device_t(0x170,0x176,0xA0,"Disk 3");
-    devs[3] = device_t(0x170,0x176,0xB0,"Disk 4");
+    devs[0] = device_t(0x1f0,0x1f6,0xA0,(char*)"Disk 1");
+    devs[1] = device_t(0x1f0,0x1f6,0xB0,(char*)"Disk 2");
+    devs[2] = device_t(0x170,0x176,0xA0,(char*)"Disk 3");
+    devs[3] = device_t(0x170,0x176,0xB0,(char*)"Disk 4");
 
     bool found = false;
     uint64_t hd = 0;
@@ -136,7 +136,7 @@ namespace VGASELECT {
     uint64_t selection;
     uint64_t follow;
     bool g,ok,retry,can_c;
-    char* mode_names[] = { "80x25 text", "90x30 text", "90x60 text" };
+    char* mode_names[] = { (char*)"80x25 text", (char*)"90x30 text", (char*)"90x60 text" };
     uint64_t mode_widths[] = { 80, 90, 90 };
     uint64_t mode_heights[] = { 25, 30, 60 };
     void put_symbol(uint64_t x, uint64_t y, uint8_t c) {
@@ -178,7 +178,7 @@ namespace VGASELECT {
             put_symbol(i,24,0xcd);
             put_symbol(i,2,0xcd);
         }
-        put_string(1,1,"longOS VGA Configuration");
+        put_string(1,1,(char*)"longOS VGA Configuration");
         set_line_color(1,BG_BLUE | FG_YELLOW,1,25);
         put_symbol(0,0,0xc9);
         put_symbol(0,24,0xc8);
@@ -191,7 +191,7 @@ namespace VGASELECT {
         }
         put_symbol(39,2,0xcb);
         put_symbol(39,24,0xca);
-        put_string(40,3,"Right Text");
+        put_string(40,3,(char*)"Right Text");
         set_line_color(3,BG_BLUE | FG_YELLOW,40,50);
         for (uint64_t i = 0; i < 3; i++) {
             set_cursor_pos(coord_from_pos(1,i+3));
@@ -282,7 +282,7 @@ extern "C" void main() {
     init_idt();
     PIT::init_timer();
 
-    device_t boot_disk = device_t(0x1f0,0x3f6,0xA0,"");
+    device_t boot_disk = device_t(0x1f0,0x3f6,0xA0,(char*)"");
     init_disk(&boot_disk);
     uint8_t* rest_of_kernel = (uint8_t*)0x18000;
     read_disk(&boot_disk,rest_of_kernel,131,(uint64_t)kernel_sectors);
@@ -296,7 +296,7 @@ extern "C" void main() {
         printf("[SERIAL] Failed to init serial");
         return;
     }
-    serial::write_serial("Just passing by.\n\r",18);
+    serial::write_serial((char*)"Just passing by.\n\r",18);
 #endif
     printf("Welcome to %s %s\n\r","longOS","dev snapshot");
     PCSPK::beep();
@@ -319,7 +319,7 @@ extern "C" void main() {
     
 #ifndef MINIMAL_MODE
     VFS::install_vfs();
-    device_t* disk = init_disk();
+    init_disk();
 
     ACPI::enable_acpi();
     //ACPI::detect_hardware();

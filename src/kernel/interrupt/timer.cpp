@@ -13,7 +13,7 @@ namespace PIT {
     }
 
     void init_timer(void) {
-        register_interrupt(32, (uint64_t)&timer);
+        register_interrupt(0x20, (uint64_t)&timer);
         set_frequency(1000);
         outb(0x21, inb(0x21) & ~0b00000001);
         outb(0xa1, inb(0xa1));

@@ -1,6 +1,6 @@
 .SILENT:
 TARGET=x86_64
-KERNEL_ARGS=-I"include/kernel" -ffreestanding -nostdlib -mno-red-zone -Wno-write-strings -fno-permissive -Wno-attributes -Wno-int-to-pointer-cast -Wno-pointer-arith -O0
+KERNEL_ARGS=-I"include/kernel" -ffreestanding -nostdlib -mno-red-zone -fno-permissive -O0 -Wall
 KERNEL_ARGS64=$(KERNEL_ARGS) -m64 -c
 SRC=src
 SRC_KERNEL=$(SRC)/kernel
@@ -34,6 +34,7 @@ kernel:
 	$(GPP) $(KERNEL_ARGS64) "$(SRC_KERNEL)/io/pci.cpp" -o "$(BUILD_KERNEL)/pci.o"
 	$(GPP) $(KERNEL_ARGS64) "$(SRC_KERNEL)/io/sound.cpp" -o "$(BUILD_KERNEL)/sound.o"
 	$(GPP) $(KERNEL_ARGS64) "$(SRC_KERNEL)/io/cmos.cpp" -o "$(BUILD_KERNEL)/cmos.o"
+	$(GPP) $(KERNEL_ARGS64) "$(SRC_KERNEL)/io/mouse.cpp" -o "$(BUILD_KERNEL)/mouse.o"
 	echo "Building util"
 	$(GPP) $(KERNEL_ARGS64) "$(SRC_KERNEL)/util/string.cpp" -o "$(BUILD_KERNEL)/string.o"
 	$(GPP) $(KERNEL_ARGS64) "$(SRC_KERNEL)/util/convert.cpp" -o "$(BUILD_KERNEL)/convert.o"
@@ -54,7 +55,6 @@ kernel:
 	$(GPP) $(KERNEL_ARGS64) "$(SRC_KERNEL)/interrupt/timer.cpp" -o "$(BUILD_KERNEL)/timer.o"
 	echo "Building others"
 	$(GPP) $(KERNEL_ARGS64) "$(SRC_KERNEL)/task.cpp" -o "$(BUILD_KERNEL)/task.o"
-	$(GPP) $(KERNEL_ARGS64) "$(SRC_KERNEL)/font.cpp" -o "$(BUILD_KERNEL)/font.o"
 build: prepare
 #	nasm -f bin $(SRC_RES)/font.asm -o $(BUILD_RES)/font.bin
 	make boot

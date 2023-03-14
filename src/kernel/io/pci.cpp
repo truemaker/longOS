@@ -7,26 +7,26 @@
 
 namespace PCI {
     char* device_class_names[] = {
-        "Unclassified",
-        "Mass Storage Controller",
-        "Network Controller",
-        "Display Controller",
-        "Multimedia Controller",
-        "Memory Controller",
-        "Bridge Device",
-        "Simple Communication Controller",
-        "Base System Peripheral",
-        "Input Device Controller",
-        "Docking Station", 
-        "Processor",
-        "Serial Bus Controller",
-        "Wireless Controller",
-        "Intelligent Controller",
-        "Satellite Communication Controller",
-        "Encryption Controller",
-        "Signal Processing Controller",
-        "Processing Accelerator",
-        "Non Essential Instrumentation"
+        (char*)"Unclassified",
+        (char*)"Mass Storage Controller",
+        (char*)"Network Controller",
+        (char*)"Display Controller",
+        (char*)"Multimedia Controller",
+        (char*)"Memory Controller",
+        (char*)"Bridge Device",
+        (char*)"Simple Communication Controller",
+        (char*)"Base System Peripheral",
+        (char*)"Input Device Controller",
+        (char*)"Docking Station", 
+        (char*)"Processor",
+        (char*)"Serial Bus Controller",
+        (char*)"Wireless Controller",
+        (char*)"Intelligent Controller",
+        (char*)"Satellite Communication Controller",
+        (char*)"Encryption Controller",
+        (char*)"Signal Processing Controller",
+        (char*)"Processing Accelerator",
+        (char*)"Non Essential Instrumentation"
     };
     uint16_t read_config_word(uint8_t bus,uint8_t device, uint8_t func, uint8_t offset) {
         uint32_t addr;
@@ -147,22 +147,22 @@ namespace PCI {
     }
     
     char* ide_prog_if[] {
-        "ISA Compatibillity mode-only",
-        "PCI native mode-only",
-        "ISA Compatibillity mode (support PCI native mode)",
-        "PCI native mode (support ISA Compatibillity mode)"
+        (char*)"ISA Compatibillity mode-only",
+        (char*)"PCI native mode-only",
+        (char*)"ISA Compatibillity mode (support PCI native mode)",
+        (char*)"PCI native mode (support ISA Compatibillity mode)"
     };
 
     char* network_controller[] {
-        "Ethernet",
-        "Token Ring",
-        "FDDI",
-        "ATM",
-        "ISDN",
-        "WorldFlip",
-        "PICMG 2.14 Multi Computing",
-        "InfiniBand",
-        "Fabric"
+        (char*)"Ethernet",
+        (char*)"Token Ring",
+        (char*)"FDDI",
+        (char*)"ATM",
+        (char*)"ISDN",
+        (char*)"WorldFlip",
+        (char*)"PICMG 2.14 Multi Computing",
+        (char*)"InfiniBand",
+        (char*)"Fabric"
     };
 
     void print_device_type(uint8_t dclass, uint8_t dsubclass, uint8_t prog_if) {
@@ -310,7 +310,7 @@ namespace PCI {
     }
 
     pci_device_t* create_pci_device(uint8_t bus, uint8_t device, uint8_t func) {
-        uint8_t header_type = read_config_word(bus,device,func,0xC)&0x00ff;
+        //uint8_t header_type = read_config_word(bus,device,func,0xC)&0x00ff;
         pci_device_t* dev = (pci_device_t*)heap::malloc(sizeof(pci_device_t));
         dev = create_pci_device_base(bus,device,func,dev);
         dev->bus = bus;
@@ -325,7 +325,7 @@ namespace PCI {
         if (read_config_word(bus,device,func,0x0) == 0x0000) return;
         if (read_config_word(bus,device,func,0x0) == 0xFFFF) return;
         pci_device_t* pci_dev = create_pci_device(bus,device,func);
-        VFS::add_device(pci_dev,strcat("/dev/pci",uitos(devices,10)));
+        VFS::add_device(pci_dev,strcat((char*)"/dev/pci",uitos(devices,10)));
         //print(strcat("/dev/pci",uitos(devices,10))); new_line();
         devices++; //for (;;);
     }

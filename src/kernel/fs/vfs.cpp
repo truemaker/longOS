@@ -106,7 +106,7 @@ namespace VFS {
         return SUCCESS;
     }
     int vfs_get_file(char* path,vfs_entry_t* out) {
-        vfs_tree_node_t* node;
+        vfs_tree_node_t* node = 0;
         int ret = vfs_get_tree_node(path,node);
         if (ret) return ret;
         out = node->value;
@@ -154,13 +154,13 @@ namespace VFS {
         }
     }
     int vfs_mount(char* path,void* mount,uint64_t impl) {
-        vfs_tree_node_t* node;
+        vfs_tree_node_t* node = 0;
         uint64_t ret = vfs_get_tree_node(path,node);
         if (ret) return ret;
         if (!node->value) return EINVAL;
         if (node->value->file) return EUSED;
         switch (impl) {
-            case FS_IMPL_USTAR: vfs_mount_ustar((USTAR::ustar_t*)mount,node,"ustar"); break;
+            case FS_IMPL_USTAR: vfs_mount_ustar((USTAR::ustar_t*)mount,node,(char*)"ustar"); break;
             default: printf("[VFS] Error FS_IMPL %h not supported\n\r",impl); return EINVAL;
         }
         return SUCCESS;
@@ -173,8 +173,8 @@ namespace VFS {
         print(name);
         new_line();
         char* path = name;
-        if (name[0] != PATH_SEPERATOR) path = strcat("/",name);
-        vfs_tree_node_t* node;
+        if (name[0] != PATH_SEPERATOR) path = strcat((char*)"/",name);
+        vfs_tree_node_t* node = 0;
         int ecode = vfs_get_tree_node(path,node);
         if (ecode) return ecode;
         vfs_entry_t* entry = node->value;

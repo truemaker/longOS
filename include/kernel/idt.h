@@ -40,3 +40,4 @@ __attribute__((interrupt)) void pagef_handler(interrupt_frame_t* int_frame);
 __attribute__((interrupt)) void doublef_handler(interrupt_frame_t* int_frame);
 __attribute__((interrupt)) void gpf_handler(interrupt_frame_t* int_frame);
 __attribute__((interrupt)) void ssf_handler(interrupt_frame_t* int_frame);
+__attribute__((interrupt)) void mouse_handler(interrupt_frame_t* int_frame);

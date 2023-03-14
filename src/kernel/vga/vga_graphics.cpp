@@ -1,5 +1,4 @@
-static void write_pixel8(unsigned x, unsigned y, unsigned c)
-{
+void write_pixel8(unsigned x, unsigned y, unsigned c) {
 	unsigned wd_in_bytes;
 	unsigned off;
 
@@ -8,11 +7,10 @@ static void write_pixel8(unsigned x, unsigned y, unsigned c)
 	*(uint8_t*)((uint64_t)VGA_MEM-0x18000+off) = c;
 }
 
-static void write_pixel4p(unsigned x, unsigned y, uint8_t c)
-{
-	*(uint8_t*)(0x34000+x+y*640) = c;
-    *(uint8_t*)(0x7f000+y) = 4;
-    *(uint8_t*)(0x7f000+480+x) = 4;
+void write_pixel4p(unsigned x, unsigned y, uint8_t c) {
+	*(uint8_t*)((uint64_t)0x34000+x+y*640) = c;
+    *(uint8_t*)((uint64_t)0x7f000+y) = 4;
+    *(uint8_t*)((uint64_t)0x7f000+480+x) = 4;
 }
 
 void copy_plane(void* dst, void* src, int plane) {
@@ -26,9 +24,9 @@ void copy_plane(void* dst, void* src, int plane) {
             uint8_t c = *(uint8_t*)((uint64_t)src + (640*y+x));
             uint8_t mask = 0x80 >> (x & 7);
             if(pmask & c)
-	        	*(uint8_t*)((uint64_t)dst+off) = *(uint8_t*)(dst+off) | mask;
+	        	*(uint8_t*)((uint64_t)dst+off) = *(uint8_t*)((uint64_t)dst+off) | mask;
 	        else
-	        	*(uint8_t*)((uint64_t)dst+off) = *(uint8_t*)(dst+off) & ~mask;
+	        	*(uint8_t*)((uint64_t)dst+off) = *(uint8_t*)((uint64_t)dst+off) & ~mask;
         }
     }
 }

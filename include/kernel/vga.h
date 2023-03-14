@@ -105,8 +105,8 @@ void new_line();
 
 // VGA Graphics mode
 void enter_graphics();
-static void write_pixel8(unsigned x, unsigned y, unsigned c);
-static void write_pixel4p(unsigned x, unsigned y, uint8_t c);
+void write_pixel8(unsigned x, unsigned y, unsigned c);
+void write_pixel4p(unsigned x, unsigned y, uint8_t c);
 void write_screen();
 void gclear(uint8_t c = 1);
 void fill_rect(uint64_t x0, uint64_t y0, uint64_t width, uint64_t height, uint8_t color);

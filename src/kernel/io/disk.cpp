@@ -91,9 +91,8 @@ void print_device(device_t* dev) {
 }
 
 void disk_delay(device_t* dev) {
-    uint64_t k = 0;
     for (uint64_t i = 0; i < 16; i++) {
-        k = inb(dev->dev_ctl);
+        inb(dev->dev_ctl);
     }
 }
 

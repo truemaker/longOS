@@ -16,7 +16,6 @@ INPUT (
     build/kernel/serial.o
     build/kernel/disk.o
     build/kernel/heap.o
-    build/kernel/font.o
     build/kernel/acpi.o
     build/kernel/timer.o
     build/kernel/pci.o
@@ -27,6 +26,7 @@ INPUT (
     build/kernel/string.o
     build/kernel/convert.o
     build/kernel/cmos.o
+    build/kernel/mouse.o
 )
 
 OUTPUT (

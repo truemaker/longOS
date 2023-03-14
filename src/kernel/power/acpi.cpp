@@ -25,7 +25,7 @@ namespace ACPI {
         debugf("Revision: %x\n\rChecksum: %x\n\rOEM: %c%c%c%c%c%c\n\r", rsdp->revision, rsdp->checksum, rsdp->oemid[0], rsdp->oemid[1], rsdp->oemid[2], rsdp->oemid[3], rsdp->oemid[4], rsdp->oemid[5]);
         if (!check_version(rsdp)) {
             print("[ACPI] Loading RSDT...");
-            sdt = (sdt_header_t*)rsdp->rsdt;
+            sdt = (sdt_header_t*)(uint64_t)rsdp->rsdt;
             if (!g_PTM->get_present(sdt)) g_PTM->map(sdt,sdt);
             print("Done\n\r");
             if (!validate_sdt(sdt)) { print("Invalid RSDT."); asm("cli"); for(;;); }
@@ -158,8 +158,8 @@ namespace ACPI {
     }
 
     void* get_s5(void) {
-        fadt_t* fadt = (fadt_t*)get_table("FACP");
-        sdt_header_t* dsdt = (sdt_header_t*)fadt->dsdt;
+        fadt_t* fadt = (fadt_t*)get_table((char*)"FACP");
+        sdt_header_t* dsdt = (sdt_header_t*)(uint64_t)fadt->dsdt;
         if (!memcmp(dsdt->signature,(void*)"DSDT",4)) { print("[ACPI] Invalid DSDT.\n\r"); asm("cli"); for (;;); }
         char* s5_addr = (char*)((uint64_t)dsdt + 36);
         int dsdt_length = dsdt->length - 36;
@@ -179,7 +179,7 @@ namespace ACPI {
 
     uint16_t get_typa(void) {
         char* s5 = (char*)get_s5();
-        if (!((s5[-1]==0x08) || ((s5[-2] == 0x08) && (s5[-1] == '\\'))  && (s5[4] == 0x12))) { print("[ACPI] \\_S5_ parse error."); asm("cli"); for (;;); }
+        if (!(((s5[-1]==0x08) || ((s5[-2] == 0x08) && (s5[-1] == '\\'))) && (s5[4] == 0x12))) { print("[ACPI] \\_S5_ parse error."); asm("cli"); for (;;); }
         s5 += 5;
         s5 += ((*s5 & 0xC0) >> 6) + 2;
         if (*s5 == 0x0A) s5++;
@@ -188,7 +188,7 @@ namespace ACPI {
 
     uint16_t get_typb(void) {
         char* s5 = (char*)get_s5();
-        if (!((s5[-1]==0x08) || ((s5[-2] == 0x08) && (s5[-1] == '\\')) && (s5[4] == 0x12))) { print("[ACPI] \\_S5_ parse error."); asm("cli"); for (;;); }
+        if (!(((s5[-1]==0x08) || ((s5[-2] == 0x08) && (s5[-1] == '\\'))) && (s5[4] == 0x12))) { print("[ACPI] \\_S5_ parse error."); asm("cli"); for (;;); }
         s5 += 5;
         s5 += ((*s5 & 0xC0) >> 6) + 2;
         if (*s5 == 0x0A) s5++;
@@ -199,8 +199,7 @@ namespace ACPI {
 
     void shutdown(void) {
         enable_acpi(); // Just to make sure
-        fadt_t *fadt = (fadt_t*)get_table("FACP");
-        uint16_t typa = get_typa();
+        fadt_t *fadt = (fadt_t*)get_table((char*)"FACP");
         print("[ACPI] Powering off in 5 seconds...\n\r");
         PIT::sleep(5000);
         print("[ACPI] Sending TYPa...\n\r");
@@ -210,17 +209,17 @@ namespace ACPI {
     }
 
     void enable_acpi(void) {
-        fadt_t *fadt = (fadt_t*)get_table("FACP");
+        fadt_t *fadt = (fadt_t*)get_table((char*)"FACP");
         if ((inw(fadt->pm1a_control_block) & (1<<13)) == 0) {
             if (fadt->acpi_enable != 0 && fadt->smi_command_port != 0) {
                 outb(fadt->smi_command_port,fadt->acpi_enable);
                 uint64_t i = 0;
-                while (inw(fadt->pm1a_control_block) & 1 == 0 && i < 300) {
+                while ((inw(fadt->pm1a_control_block) & 1) == 0 && i < 300) {
                     PIT::sleep(10);
                     i++;
                 }
                 if (fadt->pm1b_control_block) {
-                    while (inw(fadt->pm1b_control_block) & 1 == 0 && i < 300) {
+                    while ((inw(fadt->pm1b_control_block) & 1) == 0 && i < 300) {
                         PIT::sleep(10);
                         i++;
                     }
@@ -284,7 +283,7 @@ namespace ACPI {
     void add_hpet_table(sdt_header_t* header) {
         hpet_t* hpet = (hpet_t*)header;
         printf("[ACPI] Adding HPET %x", hpet->hpet_number);
-        VFS::add_device(hpet,strcat("/dev/hpet",uitos(hpet->hpet_number,10)));
+        VFS::add_device(hpet,strcat((char*)"/dev/hpet",uitos(hpet->hpet_number,10)));
     }
 
     void add_apic_table(sdt_header_t* header) {

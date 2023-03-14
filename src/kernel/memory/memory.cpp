@@ -92,8 +92,9 @@ void unlock_old_page_tables(void) {
     free_pages((void*)&_end_all,7);
 }
 
-void memset(void* addr, uint8_t sval, uint64_t count) {
+void memset(void* dst, uint8_t sval, uint64_t count) {
     if(!count){return;} // nothing to set?
+    uint64_t addr = (uint64_t)dst;
     uint64_t val = (sval & 0xFF); // create a 64-bit version of 'sval'
     val |= ((val << 8) & 0xFF00);
     val |= ((val << 16) & 0xFFFF0000);
@@ -108,19 +109,23 @@ void memset(void* addr, uint8_t sval, uint64_t count) {
 
 bool memcmp(void* a, void* b, uint64_t count) {
     if(!count){return true;} // nothing to compare?
-    while(count >= 8){ if (*(uint64_t*)a != *(uint64_t*)b) return false; a += 8; b += 8; count -= 8; }
-    while(count >= 4){ if (*(uint32_t*)a != *(uint32_t*)b) return false; a += 4; b += 4; count -= 4; }
-    while(count >= 2){ if (*(uint16_t*)a != *(uint16_t*)b) return false; a += 2; b += 2; count -= 2; }
-    while(count >= 1){ if (*(uint8_t*)a != *(uint8_t*)b) return false; a += 1; b += 1; count -= 1; }
+    uint64_t aa = (uint64_t)a;
+    uint64_t ba = (uint64_t)b;
+    while(count >= 8){ if (*(uint64_t*)aa != *(uint64_t*)ba) return false; aa += 8; ba += 8; count -= 8; }
+    while(count >= 4){ if (*(uint32_t*)aa != *(uint32_t*)ba) return false; aa += 4; ba += 4; count -= 4; }
+    while(count >= 2){ if (*(uint16_t*)aa != *(uint16_t*)ba) return false; aa += 2; ba += 2; count -= 2; }
+    while(count >= 1){ if (*(uint8_t*)aa != *(uint8_t*)ba) return false; aa += 1; ba += 1; count -= 1; }
     return true;
 }
 
 void memcpy(void* dst, void* src, uint64_t count) {
     if(!count){return;} // nothing to copy?
-    while(count >= 8){ *(uint64_t*)dst = *(uint64_t*)src; dst += 8; src += 8; count -= 8; }
-    while(count >= 4){ *(uint32_t*)dst = *(uint32_t*)src; dst += 4; src += 4; count -= 4; }
-    while(count >= 2){ *(uint16_t*)dst = *(uint16_t*)src; dst += 2; src += 2; count -= 2; }
-    while(count >= 1){ *(uint8_t*)dst = *(uint8_t*)src; dst += 1; src += 1; count -= 1; }
+    uint64_t dstaddr = (uint64_t)dst;
+    uint64_t srcaddr = (uint64_t)src;
+    while(count >= 8){ *(uint64_t*)dstaddr = *(uint64_t*)srcaddr; dstaddr += 8; srcaddr += 8; count -= 8; }
+    while(count >= 4){ *(uint32_t*)dstaddr = *(uint32_t*)srcaddr; dstaddr += 4; srcaddr += 4; count -= 4; }
+    while(count >= 2){ *(uint16_t*)dstaddr = *(uint16_t*)srcaddr; dstaddr += 2; srcaddr += 2; count -= 2; }
+    while(count >= 1){ *(uint8_t*)dstaddr = *(uint8_t*)srcaddr; dstaddr += 1; srcaddr += 1; count -= 1; }
     return;
 }
 
@@ -351,7 +356,6 @@ void ptm_t::unmap(void* vmem) {
 }
 
 bool ptm_t::get_present(void* vaddr) {
-    uint64_t offset = ((uint64_t)vaddr) % 0x1000;
     page_index_t pi = page_index_t(align_to_start((uint64_t)vaddr,0x1000));
     pd_entry_t pde;
     pde = pml4->entries[pi.pdp_i];
@@ -424,7 +428,7 @@ pd_entry_t* ptm_t::get_pd(void* addr) {
     if (!pdpe) return 0;
     if (!pdpe->p) return 0;
     page_index_t idx = page_index_t((uint64_t)addr);
-    pt_t* pdp = (pt_t*)pdpe->addr;
+    pt_t* pdp = (pt_t*)(uint64_t)pdpe->addr;
     return &pdp->entries[idx.p_i];
 }
 
@@ -433,7 +437,7 @@ pd_entry_t* ptm_t::get_pt(void* addr) {
     if (!pde) return 0;
     if (!pde->p) return 0;
     page_index_t idx = page_index_t((uint64_t)addr);
-    pt_t* pd = (pt_t*)pde->addr;
+    pt_t* pd = (pt_t*)(uint64_t)pde->addr;
     return &pd->entries[idx.pt_i];
 }
 
@@ -442,7 +446,7 @@ pd_entry_t* ptm_t::get_page(void* addr) {
     pd_entry_t* pte = get_pt(addr);
     if (!pte) return 0;
     page_index_t idx = page_index_t((uint64_t)addr);
-    pt_t* pt = (pt_t*)pte->addr;
+    pt_t* pt = (pt_t*)(uint64_t)pte->addr;
     return &pt->entries[idx.p_i];
 }
 

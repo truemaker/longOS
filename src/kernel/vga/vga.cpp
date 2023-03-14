@@ -17,8 +17,7 @@ uint64_t h = 0;
 bool g = false;
 uint8_t b = 0;
 
-unsigned char g_80x25_text[] =
-{
+unsigned char g_80x25_text[] = {
 /* MISC */
 	0x67,
 /* SEQ */
@@ -57,8 +56,7 @@ unsigned char g_90x30_text[] {
 };
 
 
-unsigned char g_90x60_text[] =
-{
+unsigned char g_90x60_text[] = {
 /* MISC */
 	0xE7,
 /* SEQ */
@@ -77,8 +75,7 @@ unsigned char g_90x60_text[] =
 	0x0C, 0x00, 0x0F, 0x08, 0x00,
 };
 
-unsigned char g_320x200x256[] =
-{
+unsigned char g_320x200x256[] = {
 /* MISC */
 	0x63,
 /* SEQ */
@@ -97,8 +94,7 @@ unsigned char g_320x200x256[] =
 	0x41, 0x00, 0x0F, 0x00,	0x00
 };
 
-unsigned char g_640x480x16[] =
-{
+unsigned char g_640x480x16[] = {
 /* MISC */
 	0xE3,
 /* SEQ */
@@ -306,7 +302,6 @@ uint16_t coord_from_pos(uint16_t x, uint16_t y) {
 
 void noprint(const char *str) {
     char* cPtr = (char*)str;
-    int i = 0;
     while (*cPtr != 0) {
         serial::write_serial(*cPtr);
         cPtr++;
@@ -315,7 +310,6 @@ void noprint(const char *str) {
 
 void print(const char *str) {
     char* cPtr = (char*)str;
-    int i = 0;
     while (*cPtr != 0) {
         printc(*cPtr);
         cPtr++;
@@ -458,7 +452,6 @@ void printf(const char* str, ...) {
     va_list ap;
     va_start(ap, str);
     char* cPtr = (char*)str;
-    int i = 0;
     while (*cPtr != 0) {
         switch (*cPtr) {
             case '%':
@@ -478,7 +471,6 @@ void noprintf(const char* str, ...) {
     va_list ap;
     va_start(ap, str);
     char* cPtr = (char*)str;
-    int i = 0;
     while (*cPtr != 0) {
         switch (*cPtr) {
             case '%':

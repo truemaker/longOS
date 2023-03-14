@@ -12,10 +12,10 @@ namespace USTAR {
         void* addr = (void*)buffer;
         for (uint64_t i = 0; i < MAX_FILES; i++) {
             file_entry_t* file = (file_entry_t*)addr;
-            if (file->name == "\0") break;
+            if (file->name == 0) break;
             memcpy(this->files+i,file,512);
             uint64_t size = oct2bin((uint8_t*)file->size,11);
-            addr += (((size + 511) / 512) + 1) * 512;
+            addr = (void*)((uint64_t)addr+(((size + 511) / 512) + 1) * 512);
         }
     }
 
